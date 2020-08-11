@@ -5,7 +5,7 @@ import { OrbitControls } from '../src/node_modules/three/examples/jsm/controls/O
 import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoader.js';
 import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoader.js';
 
-
+import {streetLamp,people} from '../src/Shape/shape.js'
 //trhee object
 const loader = new THREE.TextureLoader();
 var loaderF = new FBXLoader();
@@ -54,8 +54,8 @@ function light(a,b,c){
     light.position.set(a,b,c);
     light.shadow.camera.top=30;
     light.shadow.camera.bottom=0;
-    light.shadow.mapSize.width = 20;  // default
-    light.shadow.mapSize.height = 20; // default
+    light.shadow.mapSize.width = 300;  // default
+    light.shadow.mapSize.height = 300; // default
     light.shadow.camera.near = -10.5;    // default
     light.shadow.camera.far = 50;     // default
 
@@ -275,31 +275,7 @@ function loadModel(){
     
 }
 
-function streetLamp(){
-    var bodymaterial = new THREE.MeshLambertMaterial({ color: 0x8B8381 } );
-    var geometry=new THREE.BoxGeometry( 1, 1, 2 );
-    var GeometryLamp = new THREE.CylinderBufferGeometry(0.5, 0.5, 15, 10);
-   
-    var pole= new THREE.Mesh( GeometryLamp, bodymaterial );
-    pole.position.set(0,15/2,0)
-   
-    var pole2= new THREE.Mesh(geometry,bodymaterial);
-    pole2.position.set(0.0,15.0,0.5);
 
-    var sLight=new THREE.SpotLight(0xFFFFFF,1)
-    sLight.position.set(0.0,15.0,1.0)
-    sLight.angle=35*Math.PI/180
-    sLight.target.position.set(0.0,0.0,6.0)
-    sLight.castShadow = true;
-    var street = new THREE.Group();
-
-    street.add(pole);
-    street.add(pole2);
-    street.add(sLight);
-    street.add(sLight.target)
- 
-    return street;
-}
 
 
 window.onload= function(){
@@ -332,12 +308,27 @@ window.onload= function(){
     }
 
 
+var d=-1
+for(var i=0;i<3;i++){
+    var sre=streetLamp()
+    sre.position.set(d*(planeA/2-10),0,planeA/2)
+    sre.rotateY(180*Math.PI/180)
+    scene.add(sre)
+
+    var sre2=streetLamp()
+    sre2.position.set(d*(planeA/2-10),0,-planeA/2)
+    sre2.rotateY(0*Math.PI/180)
+    scene.add(sre2)
+    d++
+}
+var spalto=people(planeA)
+scene.add(spalto)
     loadModel();
 
 
     renderer = new THREE.WebGLRenderer();
     renderer.autoClearColor = false;
-    renderer.shadowMap.enabled = false ;
+    renderer.shadowMap.enabled = true ;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     renderer.setSize( window.innerWidth, window.innerHeight );
