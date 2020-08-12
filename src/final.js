@@ -14,6 +14,7 @@ var loaderF = new FBXLoader();
 var renderer;
 var scene,Bscene;
 var bgMesh;
+var ball;
 var camera;
 var human;
 var light_a=[];
@@ -299,6 +300,7 @@ window.onload= function(){
 
     human=humanStructure()
     scene.add(human);
+    ball = ball(1,32);
     
 
     {var color = 0x89846c;

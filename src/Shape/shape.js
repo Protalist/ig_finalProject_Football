@@ -62,3 +62,13 @@ export function people(len){
     spalto.add(spalto4)
     return spalto;
 }
+
+export function ball(radius,howgooditlooks){
+    const geometry = new THREE.SphereGeometry(radius,howgooditlooks,howgooditlooks);
+    const material = new THREE.MeshPhongMaterial();
+    const mesh = new THREE.Mesh(geometry, material);
+    material.map = new THREE.TextureLoader().load('../src/texture/ballTex.jpg');
+    
+    return mesh;
+
+}
