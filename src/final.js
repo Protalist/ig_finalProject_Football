@@ -301,7 +301,7 @@ window.onload= function(){
     human=humanStructure()
     scene.add(human);
     ball = ball(1,32);
-    
+    scene.add(ball);
 
     {var color = 0x89846c;
         var intensity = 0.3;
