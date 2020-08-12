@@ -56,7 +56,7 @@ export function people(len){
 
 
     var spalto = new THREE.Group();
-    spalto.add(spalto1)
+    //spalto.add(spalto1)
     spalto.add(spalto2)
     spalto.add(spalto3)
     spalto.add(spalto4)

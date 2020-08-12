@@ -4,8 +4,9 @@ import * as THREE from '../src/node_modules/three/build/three.module.js'//'https
 import { OrbitControls } from '../src/node_modules/three/examples/jsm/controls/OrbitControls.js' // 'https://unpkg.com/three@0.118.3/examples/jsm/controls/OrbitControls.js';
 import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoader.js';
 import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoader.js';
+import {TWEEN} from "/src/node_modules/three/examples/jsm/libs/tween.module.min.js";
 
-import {streetLamp,people} from '../src/Shape/shape.js'
+import {streetLamp,people,ball} from '../src/Shape/shape.js'
 //trhee object
 const loader = new THREE.TextureLoader();
 var loaderF = new FBXLoader();
@@ -14,7 +15,7 @@ var loaderF = new FBXLoader();
 var renderer;
 var scene,Bscene;
 var bgMesh;
-var ball;
+var balla;
 var camera;
 var human;
 var light_a=[];
@@ -23,6 +24,7 @@ var texture_a=[];
 var tree_a=[];
 var lamp_a=[];
 
+var tween
 
 //controlli della telecamera
 var controls 
@@ -81,6 +83,20 @@ function background(){
     
 }
 
+function fondoCampo(){
+    
+    const planeGeo = new THREE.PlaneBufferGeometry(50,120);
+    const planeMat = new THREE.MeshPhongMaterial({
+        color: 0x44aa88,
+    side: THREE.DoubleSide,
+    fog: false,
+    });
+    const mesh = new THREE.Mesh(planeGeo, planeMat);
+    mesh.receiveShadow = true;
+    mesh.position.set(85,0,0);
+    mesh.rotation.x = Math.PI/2;
+    scene.add(mesh);
+}
 
 function plane(a,b){
     const texture = loader.load('../src/texture/football_field.jpeg');
@@ -263,7 +279,7 @@ function loadModel(){
          object.position.set(planeA/2-2,10,0);
         object.rotateX(-90*Math.PI/180)
         object.rotateZ(-180*Math.PI/180)
-        object.scale.set(0.1,0.09,0.09)
+        object.scale.set(0.1,0.2,0.09)
 
         scene.add( object );
         
@@ -295,13 +311,18 @@ window.onload= function(){
     light(-2, 4, 8);
 
     plane(planeA,planeB);
-
+    fondoCampo();
     scene.add(camera)
 
     human=humanStructure()
+    human.position.x=-5;
+    human.rotation.y=Math.PI/2;
     scene.add(human);
-    ball = ball(1,32);
-    scene.add(ball);
+    balla = ball(1,32);
+    balla.position.y=1;
+
+    scene.add(balla);
+    console.log(balla.position.z)
 
     {var color = 0x89846c;
         var intensity = 0.3;
@@ -327,6 +348,26 @@ var spalto=people(planeA)
 scene.add(spalto)
     loadModel();
 
+    document.addEventListener('keydown', function(event) {
+        if (event.code == 'KeyK' ) {
+           ShotBall(balla,"rightLow");
+        }
+        else if (event.code == 'KeyI' ) {
+            ShotBall(balla,"rightHigh");
+         }
+         else if (event.code == 'KeyU' ) {
+            ShotBall(balla,"centerHigh");
+         }
+         else if (event.code == 'KeyY' ) {
+            ShotBall(balla,"leftHigh");
+         }
+         else if (event.code == 'KeyH' ) {
+            ShotBall(balla,"leftLow");
+         }
+         else if (event.code == 'KeyJ' ) {
+            ShotBall(balla,"CenterLow");
+         }
+      });
 
     renderer = new THREE.WebGLRenderer();
     renderer.autoClearColor = false;
@@ -351,6 +392,23 @@ scene.add(spalto)
  
 }
 
+function ShotBall(balla,dir){
+    switch(dir){
+        default:
+            var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:20}; 
+            tween = new TWEEN.Tween(position).to(target, 4000); //Now update the 3D mesh accordingly 
+            tween.onUpdate(function(){ 
+            balla.position.x = position.x; 
+            balla.position.y = position.y; 
+            balla.position.z = position.z;
+             balla.rotation.y +=0.01;  
+            }); //But don't forget, to start the tween 
+            tween.easing(TWEEN.Easing.Bounce.Out);
+            tween.start();
+    }
+   
+}
+
 
 function animate(time){
     // time *= 0.001;
@@ -358,7 +416,7 @@ function animate(time){
     // now=time;
     // an=an+delta
     requestAnimationFrame( animate );
-
+    TWEEN.update();
     controls.update();
    
 	renderer.render( scene, camera );
