@@ -59,7 +59,7 @@ export function people(len, ani){
 
 
     var spalto = new THREE.Group();
-    spalto.add(spalto1)
+    //spalto.add(spalto1)
     spalto.add(spalto2)
     spalto.add(spalto3)
     spalto.add(spalto4)
@@ -152,4 +152,14 @@ function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDurat
 			texture.offset.y = currentRow / this.tilesVertical;
 		}
 	};
+}
+
+export function ball(radius,howgooditlooks){
+    const geometry = new THREE.SphereGeometry(radius,howgooditlooks,howgooditlooks);
+    const material = new THREE.MeshPhongMaterial();
+    const mesh = new THREE.Mesh(geometry, material);
+    material.map = new THREE.TextureLoader().load('../src/texture/ballTex.jpg');
+    
+    return mesh;
+
 }
