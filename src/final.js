@@ -5,7 +5,9 @@ import { OrbitControls } from '../src/node_modules/three/examples/jsm/controls/O
 import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoader.js';
 import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoader.js';
 
-import {streetLamp,people} from '../src/Shape/shape.js'
+import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
+
+import {streetLamp,people, portiere} from '../src/Shape/shape.js'
 //trhee object
 const loader = new THREE.TextureLoader();
 var loaderF = new FBXLoader();
@@ -239,7 +241,6 @@ function art( isLeg){
 
 
 function loadModel(){
-    var carBox=new THREE.Box3(new THREE.Vector3(), new THREE.Vector3());;;
     var loader3 = new TDSLoader();
     var r=loader3.load( '../src/Models/p/Gate.3ds', function ( object ) {
         // object.rotateX(90*Math.PI/180)
@@ -308,6 +309,14 @@ window.onload= function(){
     }
 
 
+    var port=portiere();
+    port.translateX(planeA/2-10)
+    port.translateZ(-10)
+    port.rotateY(90*Math.PI/180)
+
+    scene.add(port)
+
+    var tween= new TWEEN.Tween(port.position).to({z:10},3000).repeat(Infinity).yoyo(true).start()
 var d=-1
 for(var i=0;i<3;i++){
     var sre=streetLamp()
@@ -351,12 +360,10 @@ scene.add(spalto)
 
 
 function animate(time){
-    // time *= 0.001;
-    // var delta=time-now;
-    // now=time;
-    // an=an+delta
+
     requestAnimationFrame( animate );
 
+    TWEEN.update(time);
     controls.update();
    
 	renderer.render( scene, camera );

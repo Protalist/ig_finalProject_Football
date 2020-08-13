@@ -2,7 +2,7 @@
 import * as THREE from '../node_modules/three/build/three.module.js'
 
 export function streetLamp(){
-    var bodymaterial = new THREE.MeshLambertMaterial({ color: 0x8B8381 } );
+    var bodymaterial = new THREE.MeshPhongMaterial({ color: 0x8B8381 } );
     var geometry=new THREE.BoxGeometry( 1, 1, 2 );
     var GeometryLamp = new THREE.CylinderBufferGeometry(0.5, 0.5, 30, 10);
    
@@ -61,4 +61,52 @@ export function people(len){
     spalto.add(spalto3)
     spalto.add(spalto4)
     return spalto;
+}
+
+
+
+
+
+export function portiere(){
+    var shape = new THREE.Shape();
+
+var x = 3;
+var y = 0;
+var heigh=5;
+var radius=3;
+var radius2=1;
+// shape.moveTo(x + 2.5, y + 2.5);
+// shape.bezierCurveTo(x + 2.5, y + 2.5, x + 2, y, x, y);
+// shape.bezierCurveTo(x - 3, y, x - 3, y + 3.5, x - 3, y + 3.5);
+// shape.bezierCurveTo(x - 3, y + 5.5, x - 1.5, y + 7.7, x + 2.5, y + 9.5);
+// shape.bezierCurveTo(x + 6, y + 7.7, x + 8, y + 4.5, x + 8, y + 3.5);
+// shape.bezierCurveTo(x + 8, y + 3.5, x + 8, y, x + 5, y);
+// shape.bezierCurveTo(x + 3.5, y, x + 2.5, y + 2.5, x + 2.5, y + 2.5);
+
+shape.arc(0,heigh,radius,0,180*Math.PI/180,false)
+
+shape.moveTo(x,y);
+shape.lineTo(x,y+heigh);
+
+
+shape.lineTo(-x,y+heigh);
+shape.lineTo(-x,y);
+shape.lineTo(x,y)
+
+
+
+var shape2= new THREE.Shape();
+
+shape2.moveTo(0,heigh+radius+radius2/2)
+shape2.arc(0,0,radius2,0,360*Math.PI/180,false);
+
+
+const curveSegments =  6;  
+var g=new THREE.ShapeBufferGeometry(shape, curveSegments);
+var m = new THREE.MeshPhongMaterial({ color: 0x8B8381 ,side: THREE.DoubleSide} );
+
+var g2=new THREE.ShapeBufferGeometry(shape2, curveSegments);
+var r= new THREE.Mesh(g,m);
+r.add(new THREE.Mesh(g2,m))
+return r;
 }
