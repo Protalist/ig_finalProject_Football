@@ -7,15 +7,18 @@ import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoa
 import {TWEEN} from "/src/node_modules/three/examples/jsm/libs/tween.module.min.js";
 
 import {streetLamp,people,ball} from '../src/Shape/shape.js'
+
+
+
 //trhee object
 const loader = new THREE.TextureLoader();
-var loaderF = new FBXLoader();
 
+var collisions=[];
 //main object in the scene
 var renderer;
 var scene,Bscene;
 var bgMesh;
-var balla;
+var balla,goal,hitGoal,hitPost,hitTarget;
 var camera;
 var human;
 var light_a=[];
@@ -24,7 +27,10 @@ var texture_a=[];
 var tree_a=[];
 var lamp_a=[];
 
-var tween
+var tween1,tween2;
+var notStartedSecondTween=false;
+var notStarted = false;
+
 
 //controlli della telecamera
 var controls 
@@ -46,6 +52,30 @@ var controls
 
 //function
 //
+
+
+function calculateCollisionPoints( mesh,type,isPalla) { 
+    // Compute the bounding box after scale, translation, etc.
+    var bbox = new THREE.Box3().setFromObject(mesh);
+   
+    var bounds = {
+      type: type,
+      xMin: bbox.min.x,
+      xMax: bbox.max.x,
+      yMin: bbox.min.y,
+      yMax: bbox.max.y,
+      zMin: bbox.min.z,
+      zMax: bbox.max.z,
+    };
+    if(!isPalla){
+        collisions.push( bounds );
+    }
+    else{
+        collisions.splice(0,1,bounds);
+    }
+  }
+
+
 function light(a,b,c){
     const color = 0xFFFFFF;
     const intensity = 1.1;
@@ -97,6 +127,23 @@ function fondoCampo(){
     mesh.rotation.x = Math.PI/2;
     scene.add(mesh);
 }
+
+function specchio(){
+    
+    const planeGeo = new THREE.PlaneBufferGeometry(55,16);
+    const planeMat = new THREE.MeshPhongMaterial({
+        color: 0xFF0000,
+    side: THREE.DoubleSide,
+    fog: false,
+    });
+    const mesh = new THREE.Mesh(planeGeo, planeMat);
+    
+    mesh.receiveShadow = true;
+    mesh.position.set(50,9,0);
+    mesh.rotation.y = Math.PI/2;
+    return mesh;
+}
+
 
 function plane(a,b){
     const texture = loader.load('../src/texture/football_field.jpeg');
@@ -293,6 +340,27 @@ function loadModel(){
 }
 
 
+function detectCollisions() {
+  // Get the user's current collision area.
+  
+ 
+  // Run through each object and detect if there is a collision.
+  for ( var index = 1; index < collisions.length; index ++ ) {
+ 
+    if (collisions[ index ].type == 'collision' ) {
+      if ( ( collisions[ 0 ].xMin <= collisions[ index ].xMax && collisions[ 0 ].xMax >= collisions[ index ].xMin ) &&
+         ( collisions[ 0 ].yMin <= collisions[ index ].yMax && collisions[ 0 ].yMax >= collisions[ index ].yMin) &&
+         ( collisions[ 0 ].zMin <= collisions[ index ].zMax && collisions[ 0 ].zMax >= collisions[ index ].zMin) ) {
+        // We hit a solid object! Stop all movements.
+        console.log("GOAL");
+ 
+        // Move the object in the clear. Detect the best direction to move.
+       
+      }
+    }
+  }
+}
+
 
 
 window.onload= function(){
@@ -312,6 +380,8 @@ window.onload= function(){
 
     plane(planeA,planeB);
     fondoCampo();
+    goal = specchio();
+
     scene.add(camera)
 
     human=humanStructure()
@@ -323,7 +393,9 @@ window.onload= function(){
 
     scene.add(balla);
     console.log(balla.position.z)
-
+    calculateCollisionPoints(balla,"collision",true);
+    calculateCollisionPoints(goal,"collision",false);
+    console.log(collisions);
     {var color = 0x89846c;
         var intensity = 0.3;
         var aLight = new THREE.AmbientLight(color, intensity);
@@ -349,23 +421,29 @@ scene.add(spalto)
     loadModel();
 
     document.addEventListener('keydown', function(event) {
-        if (event.code == 'KeyK' ) {
+        if (event.code == 'KeyK' && !notStarted) {
+            notStarted=true;
            ShotBall(balla,"rightLow");
         }
-        else if (event.code == 'KeyI' ) {
+        else if (event.code == 'KeyI'&& !notStarted ) {
+            notStarted=true;
             ShotBall(balla,"rightHigh");
          }
-         else if (event.code == 'KeyU' ) {
+         else if (event.code == 'KeyU' && !notStarted) {
+            notStarted=true;
             ShotBall(balla,"centerHigh");
          }
-         else if (event.code == 'KeyY' ) {
+         else if (event.code == 'KeyY'&& !notStarted ) {
+            notStarted=true;
             ShotBall(balla,"leftHigh");
          }
-         else if (event.code == 'KeyH' ) {
+         else if (event.code == 'KeyH' && !notStarted) {
+            notStarted=true;
             ShotBall(balla,"leftLow");
          }
-         else if (event.code == 'KeyJ' ) {
-            ShotBall(balla,"CenterLow");
+         else if (event.code == 'KeyJ' && !notStarted) {
+            notStarted=true;
+            ShotBall(balla,"centerLow");
          }
       });
 
@@ -392,19 +470,88 @@ scene.add(spalto)
  
 }
 
-function ShotBall(balla,dir){
-    switch(dir){
-        default:
-            var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:20}; 
-            tween = new TWEEN.Tween(position).to(target, 4000); //Now update the 3D mesh accordingly 
-            tween.onUpdate(function(){ 
+
+function tweennala(balla,position,target,target2,pot,rot){
+            tween1 = new TWEEN.Tween(position).to(target, pot); //Now update the 3D mesh accordingly 
+            tween1.onUpdate(function(){ 
             balla.position.x = position.x; 
             balla.position.y = position.y; 
             balla.position.z = position.z;
-             balla.rotation.y +=0.01;  
-            }); //But don't forget, to start the tween 
-            tween.easing(TWEEN.Easing.Bounce.Out);
-            tween.start();
+            if(rot =="-"){
+                balla.rotation.y -=0.05+Math.random()*0.1;  
+            }
+            else if (rot=="+"){
+                balla.rotation.y +=0.05+Math.random()*0.1;  
+            }
+            else if(rot=="="){
+                balla.rotation.z -=0.05+Math.random()*0.1;  
+            }
+            calculateCollisionPoints(balla,"collision",true);
+            if(collisions.length>0){
+                detectCollisions();
+            }
+             if(balla.position.x>=56. &&!notStartedSecondTween){
+                 notStartedSecondTween=true;
+                 tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).start();
+                 target.y=target2.y;
+                 target.x=target2.x;
+                 tween2.easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out));
+             }
+            }); 
+           //tween1.easing(createNoisyEasing(0.1,TWEEN.Easing.
+               //Back.Out));
+            
+            tween1.start();
+}
+
+function createNoisyEasing(randomProportion, easingFunction) {
+    var normalProportion = 1.0 - randomProportion
+    return function (k) {
+        return 0.9*easingFunction(k)
+    }
+}
+function ShotBall(balla,dir){
+    console.log(dir);
+    var pot = 1000;
+    switch(dir){
+        
+        case "rightLow":
+             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:2*20}; 
+             var target2 = { x:64, y: 1}; 
+             
+             tweennala(balla,position,target,target2,pot,"+");
+             break;
+
+        case "rightHigh":
+             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:20}; 
+             var target2 = { x:64, y: 1}; 
+             
+             tweennala(balla,position,target,target2,pot,"+");
+             break;
+        case "centerLow":
+             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:0}; 
+             var target2 = { x:64, y: 1}; 
+             
+             tweennala(balla,position,target,target2,pot,"=");
+             break;
+        case "centerHigh":
+             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:0}; 
+             var target2 = { x:64, y: 1};
+             
+             tweennala(balla,position,target,target2,pot,"=");
+             break;
+        case "leftHigh":
+                var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:-20}; 
+                var target2 = { x:64, y: 1};
+                
+                tweennala(balla,position,target,target2,pot,"-");
+                break;
+        case "leftLow":
+                    var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:-20}; 
+                    var target2 = { x:64, y: 1}; 
+                    
+                    tweennala(balla,position,target,target2,pot,"-");
+                    break;
     }
    
 }
@@ -417,6 +564,7 @@ function animate(time){
     // an=an+delta
     requestAnimationFrame( animate );
     TWEEN.update();
+    
     controls.update();
    
 	renderer.render( scene, camera );
