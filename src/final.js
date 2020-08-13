@@ -8,9 +8,13 @@ import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoa
 import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
 import {streetLamp,people, portiere} from '../src/Shape/shape.js'
+
+var clock = new THREE.Clock();
+
 //trhee object
 const loader = new THREE.TextureLoader();
 var loaderF = new FBXLoader();
+
 
 //main object in the scene
 var renderer;
@@ -24,7 +28,8 @@ var texture_a=[];
 var tree_a=[];
 var lamp_a=[];
 
-
+//gif
+var gif=[];
 //controlli della telecamera
 var controls 
 
@@ -330,7 +335,7 @@ for(var i=0;i<3;i++){
     scene.add(sre2)
     d++
 }
-var spalto=people(planeA)
+var spalto=people(planeA,gif)
 scene.add(spalto)
     loadModel();
 
@@ -360,12 +365,14 @@ scene.add(spalto)
 
 
 function animate(time){
-
+    var delta = clock.getDelta(); 
     requestAnimationFrame( animate );
 
     TWEEN.update(time);
     controls.update();
-   
+   for (var g in gif){
+       gif[g].update(1000*delta);
+   }
 	renderer.render( scene, camera );
 }
 

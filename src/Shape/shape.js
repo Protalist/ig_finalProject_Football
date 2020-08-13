@@ -1,6 +1,7 @@
 
 import * as THREE from '../node_modules/three/build/three.module.js'
 
+
 export function streetLamp(){
     var bodymaterial = new THREE.MeshPhongMaterial({ color: 0x8B8381 } );
     var geometry=new THREE.BoxGeometry( 1, 1, 2 );
@@ -28,10 +29,12 @@ export function streetLamp(){
     return street;
 }
 
-export function people(len){
+export function people(len, ani){
 
     const loader = new THREE.TextureLoader();
-    var ttxt=loader.load('../src/texture/stadium.gif');
+    var ttxt=loader.load('../src/texture/stadium.png');
+    ttxt.flipY=true
+     ani.push( new TextureAnimator( ttxt, 23, 1, 23, 75 ));
     var  generalM = new THREE.MeshPhongMaterial({ color: 0x8B8381,
     map: ttxt } );
     var geometry = new THREE.CylinderBufferGeometry(10, 10, len, 3);
@@ -109,4 +112,44 @@ var g2=new THREE.ShapeBufferGeometry(shape2, curveSegments);
 var r= new THREE.Mesh(g,m);
 r.add(new THREE.Mesh(g2,m))
 return r;
+}
+
+
+function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) 
+{	
+	// note: texture passed by reference, will be updated by the update function.
+		
+	this.tilesHorizontal = tilesHoriz;
+	this.tilesVertical = tilesVert;
+	// how many images does this spritesheet contain?
+	//  usually equals tilesHoriz * tilesVert, but not necessarily,
+	//  if there at blank tiles at the bottom of the spritesheet. 
+	this.numberOfTiles = numTiles;
+	texture.wrapS = texture.wrapT = THREE.RepeatWrapping; 
+	texture.repeat.set( 1 / this.tilesHorizontal, 1 / this.tilesVertical );
+
+	// how long should each image be displayed?
+	this.tileDisplayDuration = tileDispDuration;
+
+	// how long has the current image been displayed?
+	this.currentDisplayTime = 0;
+
+	// which image is currently being displayed?
+	this.currentTile = 0;
+		
+	this.update = function( milliSec )
+	{
+		this.currentDisplayTime += milliSec;
+		while (this.currentDisplayTime > this.tileDisplayDuration)
+		{
+			this.currentDisplayTime -= this.tileDisplayDuration;
+			this.currentTile++;
+			if (this.currentTile == this.numberOfTiles)
+				this.currentTile = 0;
+			var currentColumn = this.currentTile % this.tilesHorizontal;
+			texture.offset.x = currentColumn / this.tilesHorizontal;
+			var currentRow = Math.floor( this.currentTile / this.tilesHorizontal );
+			texture.offset.y = currentRow / this.tilesVertical;
+		}
+	};
 }
