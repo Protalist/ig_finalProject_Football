@@ -75,9 +75,9 @@ export function portiere(){
 
 var x = 3;
 var y = 0;
-var heigh=5;
+var heigh=9;
 var radius=3;
-var radius2=1;
+var radius2=2;
 // shape.moveTo(x + 2.5, y + 2.5);
 // shape.bezierCurveTo(x + 2.5, y + 2.5, x + 2, y, x, y);
 // shape.bezierCurveTo(x - 3, y, x - 3, y + 3.5, x - 3, y + 3.5);
