@@ -13,11 +13,15 @@ import {streetLamp,people, portiere, ball} from '../src/Shape/shape.js'
 
 var clock = new THREE.Clock();
 
+var errorSwitch=false,errorForShot=false;
+var errorProb= 0.3;
 var GOAL=false;
+var attempts=[];
 
 //trhee object
 const loader = new THREE.TextureLoader();
 var update =0.2;
+
 
 var collisions=[];
 //main object in the scene
@@ -541,6 +545,13 @@ scene.add(spalto)
             notStarted=true;
             ShotBall(balla,"centerLow");
          }
+
+         else if (event.code == 'KeyE' && !notStarted) {
+            
+            errorSwitch=!errorSwitch;
+            errorSwitch==true?alert("Robot Can miss"):alert("Robot won't miss ");
+            
+         }
       });
 
     renderer = new THREE.WebGLRenderer();
@@ -633,49 +644,67 @@ function createNoisyEasing(randomProportion, easingFunction) {
         return 0.9*easingFunction(k)
     }
 }
+
+function randomSign(){
+    return Math.random()>=0.5?-1:1;
+}
 function ShotBall(balla,dir){
-    console.log(dir);
+    ;
+    if(errorSwitch){
+       if(Math.random()>errorProb){
+            errorForShot=true;
+        }
+    }
+    console.log(errorForShot)
     var pot = 1000;
     switch(dir){
         
         case "rightLow":
-             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:2*20}; 
-             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:20-Math.random()*1.5}; 
+             var target,finalZ = Math.random()*2*20;;
+             var position = { x : 0, y: 1, z:0}; errorForShot==true?  target = { x : 57, y: 5+Math.random()*1.5 ,z:finalZ}:(target={ x : 57, y: 5 ,z:20},finalZ=20); 
+             
+             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5}; 
              
              tweennala(balla,position,target,target2,pot,"+");
              break;
 
         case "rightHigh":
-             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:20}; 
-             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:20-Math.random()*1.5}; 
+            var target, finalZ = Math.random()*2*20;
+             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:20},finalZ=20);
+             var target2 = { x:64-Math.random()*2, y: 1,z:finalZ-Math.random()*1.5}; 
              
              tweennala(balla,position,target,target2,pot,"+");
              break;
         case "centerLow":
-             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:0}; 
-             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:-Math.random()*1.5+Math.random()*1.5}; 
+            var target,finalZ=randomSign()*Math.random()*2*3;
+             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*1.5 ,z:finalZ}:(target = { x : 57, y: 5 ,z:0},finalZ=0);
+             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5+Math.random()*1.5}; 
              
              tweennala(balla,position,target,target2,pot,"=");
              break;
         case "centerHigh":
-             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:0}; 
-             var target2 = {x:64-Math.random()*2-Math.random()*1.5, y: 1,z:-Math.random()*1.5+Math.random()*1.5};
+            var target,finalZ=randomSign()*Math.random()*2*3;
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:0},finalZ=0);
+             var target2 = {x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5+Math.random()*1.5};
              
              tweennala(balla,position,target,target2,pot,"=");
              break;
         case "leftHigh":
-                var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:-20}; 
-                var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:-20+Math.random()*1.5};
+            var target,finalZ=-(Math.random()*2*20)-(Math.random()*2*20);
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:-20},finalZ=-20);
+            var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ+Math.random()*1.5};
                 
                 tweennala(balla,position,target,target2,pot,"-");
                 break;
         case "leftLow":
-                    var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:-2*20}; 
-                    var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:-20+Math.random()*1.5}; 
+            var target,finalZ=-(Math.random()*2*20)-(Math.random()*2*20);
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 5 ,z:-20},finalZ=-20);
+            var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ+Math.random()*1.5}; 
                     
-                    tweennala(balla,position,target,target2,pot,"-");
-                    break;
+            tweennala(balla,position,target,target2,pot,"-");
+            break;
     }
+    errorForShot=false;
    
 }
 
