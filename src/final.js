@@ -192,7 +192,10 @@ function loadModel(){
         object.traverse(
             function (child){
                 if (child instanceof THREE.Mesh) {
-            child.material.map = loader.load('../src/Models/p/texture.jpg');
+                    var tt= loader.load('../src/Models/p/texture.jpg')
+                    tt.wrapS = THREE.RepeatWrapping;
+                    tt.wrapT = THREE.RepeatWrapping;
+            child.material.map =tt;
             child.material.needsUpdate = true;
             child.material.side = THREE.DoubleSide;
             child.castShadow = true; //default is false
@@ -442,7 +445,7 @@ function animate(time){
 	renderer.render( scene, camera );
 }
 
-
+var kciking=false;
 document.onkeydown=function(e){
 
     var dir=""
@@ -451,7 +454,7 @@ document.onkeydown=function(e){
     }
     else if (event.code == 'KeyK' && !notStarted) {
         notStarted=true;
-        dir=balla,"rightLow";
+        dir="rightLow";
     }
     else if (event.code == 'KeyI'&& !notStarted ) {
         notStarted=true;
@@ -474,7 +477,8 @@ document.onkeydown=function(e){
         dir="centerLow";
      }
 
-     if(dir != ""){
+     if(dir != "" && !kciking){
+        kciking=true
         runAndKick(dir);
         dir=""
      }
@@ -500,7 +504,7 @@ function runAndKick(dir=""){
     var runback1_2= new TWEEN.Tween(human.children[4].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},time/2).repeat(3).yoyo(true)
     var runback_2= new TWEEN.Tween(human.children[5].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},time/2).repeat(1).yoyo(true)
     var runback1=new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(1).yoyo(true).onStart(()=>{runback_2.start()}).onRepeat(()=>{runback_2.start()})
-    var runback=new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(3).yoyo(true).onRepeat((obj)=>{runback1.start()}).onStart(()=>{runback1_2.start(); tweenBodyN.start()})
+    var runback=new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(3).yoyo(true).onRepeat((obj)=>{runback1.start()}).onStart(()=>{runback1_2.start(); tweenBodyN.start()}).onComplete(()=>{kciking=false})
 
  
     if(dir!=""){
