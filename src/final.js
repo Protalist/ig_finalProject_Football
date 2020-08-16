@@ -2,14 +2,14 @@
 //import
 import * as THREE from '../src/node_modules/three/build/three.module.js'//'https://unpkg.com/three@0.118.3/build/three.module.js';
 import { OrbitControls } from '../src/node_modules/three/examples/jsm/controls/OrbitControls.js' // 'https://unpkg.com/three@0.118.3/examples/jsm/controls/OrbitControls.js';
-import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoader.js';
+
 import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoader.js';
 //import {TWEEN} from "/src/node_modules/three/examples/jsm/libs/tween.module.min.js";
 
 
 import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
-import {streetLamp,people, portiere, ball} from '../src/Shape/shape.js'
+import {streetLamp,people, portiere, ball, humanStructure} from '../src/Shape/shape.js'
 
 var clock = new THREE.Clock();
 
@@ -28,7 +28,6 @@ var balla,goal,hitGoal,hitPost,hitTarget;
 var camera;
 var human;
 var light_a=[];
-var roller_wheel=[];
 var texture_a=[];
 var tree_a=[];
 var lamp_a=[];
@@ -179,138 +178,7 @@ function plane(a,b){
     }
 
 
-function humanStructure(){
-    const Material = new THREE.MeshPhongMaterial({color: 0xFFFF00, fog: true});
-    const cubeGeometry= new THREE.BoxBufferGeometry(1,1,1);
-    
-    const humanBody = new THREE.Object3D();
 
-    const body=new THREE.Mesh(cubeGeometry,Material);
-    body.scale.set(bodyWidth,bodyHeight,bodyDepth);
-    body.position.set(0,8,0);
-    body.castShadow = true; //default is false
-    body.receiveShadow = true; //default
-    humanBody.add(body)
-
-    var rightArm=art(false);
-    rightArm.position.set(bodyWidth*0.5+0.5,bodyHeight+4.6,0);
-
-    var leftArm=art(false);
-    leftArm.position.set(-(bodyWidth*0.5+0.5),bodyHeight+4.6,0);
-
-    var rightLeg=art(true);
-    rightLeg.position.set(bodyWidth*0.5-0.5,bodyHeight/2+2,0);
-
-    var leftLeg=art(true);
-    leftLeg.position.set(-(bodyWidth*0.5-0.5),bodyHeight/2+2,0);
-
-    var head=new THREE.Mesh(cubeGeometry,Material);
-    //head.scale.set(bodyWidth,bodyHeight,bodyDepth);
-    head.position.set(0,bodyHeight*2 +0.4,0);
-
-    humanBody.add(head);
-    humanBody.add(rightArm);
-    humanBody.add(leftArm);
-    humanBody.add(rightLeg);
-    humanBody.add(leftLeg);
-    return humanBody
-
-}
-function rollerBlade(){
-
-
-    var geometryUpper = new THREE.CylinderBufferGeometry(
-        0.65, 0.55, 0.7,
-        heightSegments, heightSegments,
-        true,
-        Math.PI * 0.15,//start
-        Math.PI * 1.8);//hou much is open 
-    
-    var lowerGeometry=  new THREE.BoxBufferGeometry(0.7,0.7,2)
-
-    var radiusTop =  0.15;  
-
-    var radiusBottom =  0.15;  
-    
-    var height =  0.3;  
-    
-    var radialSegments = 11;  
-    
-    const geometryWheel = new THREE.CylinderBufferGeometry(
-        radiusTop, radiusBottom, height, radialSegments);
-
-    var rollerMaterial = new THREE.MeshPhongMaterial({color: 0xEA330C, fog: true});
-    
-    var upperPart= new THREE.Mesh(geometryUpper, rollerMaterial);
-    var lowerPart= new THREE.Mesh(lowerGeometry, rollerMaterial);
-    //rollerMaterial.map.set(texture);
-    var wheel1= new THREE.Mesh(geometryWheel, rollerMaterial);
-    var wheel2= new THREE.Mesh(geometryWheel, rollerMaterial);
-    var wheel3= new THREE.Mesh(geometryWheel, rollerMaterial);
-
-    lowerPart.position.set(0,-0.7,0.58)
-    wheel1.rotation.z=90*Math.PI/180
-    wheel1.position.set(0,-0.5,-0.8)
-
-    wheel2.rotation.z=90*Math.PI/180
-    wheel2.position.set(0,-0.5,0)
-
-    wheel3.rotation.z=90*Math.PI/180
-    wheel3.position.set(0,-0.5,0.8)
-
-    upperPart.add(lowerPart);
-    lowerPart.add(wheel1)
-    lowerPart.add(wheel2)
-    lowerPart.add(wheel3)
-
-    roller_wheel.push(wheel1);
-    roller_wheel.push(wheel2);
-    roller_wheel.push(wheel3);
-
-    return upperPart;
-}
-
-
-function art( isLeg){
-    var pivotGeometry = new THREE.SphereBufferGeometry(
-        radius, widthSegments, heightSegments);
-  
-    var pivotMaterial = new THREE.MeshPhongMaterial({color: 0xFFFF00, fog: true});
-
-    var cubeGeometry= new THREE.CylinderBufferGeometry(
-        0.5, 0.5, 2, 10);
-    //THREE.BoxBufferGeometry(1,2,1)
-
-    var pivot1 = new THREE.Mesh(pivotGeometry, pivotMaterial);
-    //pivot1.position.set(0.,4.,0.)
-    pivot1.castShadow = true; //default is false
-    pivot1.receiveShadow = true; //default
-    var upperArt= new THREE.Mesh(cubeGeometry, pivotMaterial);
-    upperArt.position.set(0.,-0.7,0.)
-    upperArt.castShadow = true; //default is false
-    upperArt.receiveShadow = true; //default
-
-    var pivot2 = new THREE.Mesh(pivotGeometry, pivotMaterial);
-    pivot2.position.set(0.,-1,0.)
-    
-    var lowerArt= new THREE.Mesh(cubeGeometry, pivotMaterial);
-    lowerArt.position.set(0.,-1,0.)
-    lowerArt.castShadow = true; //default is false
-    lowerArt.receiveShadow = true; //default
-
-    pivot1.add(upperArt)
-    upperArt.add(pivot2)
-    pivot2.add(lowerArt)
-
-
-    if(isLeg){
-        var r=rollerBlade()
-        r.position.set(0,-0.68,0);
-        lowerArt.add(r)
-    }
-
-    return pivot1
-}
 
 
 function loadModel(){
@@ -363,12 +231,13 @@ function detectCollisions() {
          ( collisions[ 0 ].zMin <= collisions[ index ].zMax && collisions[ 0 ].zMax >= collisions[ index ].zMin) ) {
         // We hit a solid object! Stop all movements.
         console.log("GOAL");
- 
-        // Move the object in the clear. Detect the best direction to move.
+        return true;
        
       }
     }
   }
+
+  return false;
 }
 
 
@@ -395,7 +264,7 @@ window.onload= function(){
     scene.add(camera)
 
     human=humanStructure()
-    human.position.x=-5;
+    human.position.x=-15;
     human.rotation.y=Math.PI/2;
     scene.add(human);
     balla = ball(1,32);
@@ -420,7 +289,7 @@ window.onload= function(){
 
     scene.add(port)
 
-     tween= new TWEEN.Tween(port.position).to({z:20},3000).repeat(Infinity).yoyo(true).start()
+     tween= new TWEEN.Tween(port.position).to({z:"+40"},3000).repeat(Infinity).yoyo(true).start()
 var d=-1
 for(var i=0;i<3;i++){
     var sre=streetLamp()
@@ -434,37 +303,12 @@ for(var i=0;i<3;i++){
     scene.add(sre2)
     d++
 }
-var spalto=people(planeA,gif)
-scene.add(spalto)
+    var spalto=people(planeA,gif)
+    scene.add(spalto)
     loadModel();
 
-    document.addEventListener('keydown', function(event) {
-        if (event.code == 'KeyK' && !notStarted) {
-            notStarted=true;
-           ShotBall(balla,"rightLow");
-        }
-        else if (event.code == 'KeyI'&& !notStarted ) {
-            notStarted=true;
-            ShotBall(balla,"rightHigh");
-         }
-         else if (event.code == 'KeyU' && !notStarted) {
-            notStarted=true;
-            ShotBall(balla,"centerHigh");
-         }
-         else if (event.code == 'KeyY'&& !notStarted ) {
-            notStarted=true;
-            ShotBall(balla,"leftHigh");
-         }
-         else if (event.code == 'KeyH' && !notStarted) {
-            notStarted=true;
-            ShotBall(balla,"leftLow");
-         }
-         else if (event.code == 'KeyJ' && !notStarted) {
-            notStarted=true;
-            ShotBall(balla,"centerLow");
-         }
-      });
 
+  
     renderer = new THREE.WebGLRenderer();
     renderer.autoClearColor = false;
     renderer.shadowMap.enabled = true ;
@@ -490,6 +334,7 @@ scene.add(spalto)
 
 
 function tweennala(balla,position,target,target2,pot,rot){
+            var goal=false
             tween1 = new TWEEN.Tween(position).to(target, pot); //Now update the 3D mesh accordingly 
             tween1.onUpdate(function(){ 
             balla.position.x = position.x; 
@@ -506,7 +351,9 @@ function tweennala(balla,position,target,target2,pot,rot){
             }
             calculateCollisionPoints(balla,"collision",true);
             if(collisions.length>0){
-                detectCollisions();
+                if(detectCollisions()){
+                    goal=true
+                }
             }
              if(balla.position.x>=56. &&!notStartedSecondTween){
                  notStartedSecondTween=true;
@@ -518,8 +365,13 @@ function tweennala(balla,position,target,target2,pot,rot){
             }); 
            //tween1.easing(createNoisyEasing(0.1,TWEEN.Easing.
                //Back.Out));
-            
-            tween1.start();
+               tween1.onComplete(
+                   function(){
+                    notStarted=false;
+                    console.log(goal)
+                   }
+               )
+            return tween1
 }
 
 function createNoisyEasing(randomProportion, easingFunction) {
@@ -531,47 +383,48 @@ function createNoisyEasing(randomProportion, easingFunction) {
 function ShotBall(balla,dir){
     console.log(dir);
     var pot = 1000;
+    var t;
     switch(dir){
         
         case "rightLow":
              var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:2*20}; 
              var target2 = { x:64, y: 1}; 
              
-             tweennala(balla,position,target,target2,pot,"+");
+             t=tweennala(balla,position,target,target2,pot,"+");
              break;
 
         case "rightHigh":
              var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:20}; 
              var target2 = { x:64, y: 1}; 
              
-             tweennala(balla,position,target,target2,pot,"+");
+             t=tweennala(balla,position,target,target2,pot,"+");
              break;
         case "centerLow":
              var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:0}; 
              var target2 = { x:64, y: 1}; 
              
-             tweennala(balla,position,target,target2,pot,"=");
+             t=tweennala(balla,position,target,target2,pot,"=");
              break;
         case "centerHigh":
              var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:0}; 
              var target2 = { x:64, y: 1};
              
-             tweennala(balla,position,target,target2,pot,"=");
+             t=tweennala(balla,position,target,target2,pot,"=");
              break;
         case "leftHigh":
                 var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:-20}; 
                 var target2 = { x:64, y: 1};
                 
-                tweennala(balla,position,target,target2,pot,"-");
+                t=tweennala(balla,position,target,target2,pot,"-");
                 break;
         case "leftLow":
                     var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:-20}; 
                     var target2 = { x:64, y: 1}; 
                     
-                    tweennala(balla,position,target,target2,pot,"-");
+                    t=tweennala(balla,position,target,target2,pot,"-");
                     break;
     }
-   
+   return t;
 }
 
 
@@ -581,7 +434,7 @@ function animate(time){
 
 
     TWEEN.update(time);
-
+    HumanGroup.update(time)
     controls.update();
    for (var g in gif){
        gif[g].update(1000*delta);
@@ -590,10 +443,81 @@ function animate(time){
 }
 
 
-document.onkeypress=function(e){
+document.onkeydown=function(e){
+
+    var dir=""
     if(e.keyCode==115){
         renderer.shadowMap.enabled = !renderer.shadowMap.enabled;
     }
+    else if (event.code == 'KeyK' && !notStarted) {
+        notStarted=true;
+        dir=balla,"rightLow";
+    }
+    else if (event.code == 'KeyI'&& !notStarted ) {
+        notStarted=true;
+        dir="rightHigh";
+     }
+     else if (event.code == 'KeyU' && !notStarted) {
+        notStarted=true;
+        dir="centerHigh";
+     }
+     else if (event.code == 'KeyY'&& !notStarted ) {
+        notStarted=true;
+        dir="leftHigh";
+     }
+     else if (event.code == 'KeyH' && !notStarted) {
+        notStarted=true;
+        dir="leftLow";
+     }
+     else if (event.code == 'KeyJ' && !notStarted) {
+        notStarted=true;
+        dir="centerLow";
+     }
+
+     if(dir != ""){
+        runAndKick(dir);
+        dir=""
+     }
 }
 
 
+function runAndKick(dir=""){
+    var time=3000/2;
+    var tweenBody= new TWEEN.Tween(human.position,HumanGroup).to({x:"+3.4"},time).repeat(3).yoyo(false).start()
+    var tweenLowerLeg1= new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: [-45*Math.PI/180,45*Math.PI/180]},time).repeat(3).yoyo(true).start()
+    var tweenLowerLeg2= new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x:  [45*Math.PI/180,-45*Math.PI/180]},time).repeat(3).yoyo(true)
+    var tweenLowerLeg1_2= new TWEEN.Tween(human.children[4].children[0].children[0].rotation,HumanGroup).to({x: [45*Math.PI/180,0]},time).repeat(3).yoyo(true).start()
+    var tweenLowerLeg2_2= new TWEEN.Tween(human.children[5].children[0].children[0].rotation,HumanGroup).to({x: [0*Math.PI/180,45*Math.PI/180]},time).repeat(3).yoyo(true).start()
+    var tweenkick=new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x: [-90*Math.PI/180]},time/2).repeat(1).yoyo(true)
+ 
+    
+    var tweenArm1= new TWEEN.Tween(human.children[2].rotation,HumanGroup).to({x: [-45*Math.PI/180,45*Math.PI/180]},time).repeat(3).yoyo(true)
+    var tweenArm2= new TWEEN.Tween(human.children[3].rotation,HumanGroup).to({x: [45*Math.PI/180,-45*Math.PI/180]},time).repeat(3).yoyo(true)
+    var tweenArm1_1= new TWEEN.Tween(human.children[2].rotation,HumanGroup).to({x: [-45*Math.PI/180]},time/2).repeat(1).yoyo(true)
+    var tweenArm2_1= new TWEEN.Tween(human.children[3].rotation,HumanGroup).to({x: [45*Math.PI/180]},time/2).repeat(1).yoyo(true)
+    
+    var tweenBodyN= new TWEEN.Tween(human.position,HumanGroup).to({x:"-3.4"},time/2).repeat(3).yoyo(false)
+    var runback1_2= new TWEEN.Tween(human.children[4].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},time/2).repeat(3).yoyo(true)
+    var runback_2= new TWEEN.Tween(human.children[5].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},time/2).repeat(1).yoyo(true)
+    var runback1=new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(1).yoyo(true).onStart(()=>{runback_2.start()}).onRepeat(()=>{runback_2.start()})
+    var runback=new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(3).yoyo(true).onRepeat((obj)=>{runback1.start()}).onStart(()=>{runback1_2.start(); tweenBodyN.start()})
+
+ 
+    if(dir!=""){
+        var t=ShotBall(balla,dir);
+        tweenLowerLeg2.chain(t)
+    }
+    tweenLowerLeg1.chain(tweenkick)
+    tweenkick.chain(runback)
+
+
+    tweenArm1.chain(tweenArm1_1);
+    tweenArm2.chain(tweenArm2_1);
+
+
+    tweenArm1.start()
+    tweenArm2.start()
+    tweenLowerLeg2.start()
+}
+
+var HumanGroup = new TWEEN.Group()

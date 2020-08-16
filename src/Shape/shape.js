@@ -2,6 +2,152 @@
 import * as THREE from '../node_modules/three/build/three.module.js'
 
 
+    //dimension of the pivot
+    const radius = 0.5;
+    const widthSegments = 6;
+    const heightSegments = 6;
+
+    //dimension of the torso
+    const bodyWidth=3;
+    const bodyHeight=5.5;
+    const bodyDepth=1.5;
+
+
+var roller_wheel=[];
+
+export function humanStructure(){
+    const Material = new THREE.MeshPhongMaterial({color: 0xFFFF00, fog: true});
+    const cubeGeometry= new THREE.BoxBufferGeometry(1,1,1);
+    
+    const humanBody = new THREE.Object3D();
+
+    const body=new THREE.Mesh(cubeGeometry,Material);
+    body.scale.set(bodyWidth,bodyHeight,bodyDepth);
+    body.position.set(0,8,0);
+    body.castShadow = true; //default is false
+    body.receiveShadow = true; //default
+    humanBody.add(body)
+
+    var rightArm=art(false);
+    rightArm.position.set(bodyWidth*0.5+0.5,bodyHeight+4.6,0);
+
+    var leftArm=art(false);
+    leftArm.position.set(-(bodyWidth*0.5+0.5),bodyHeight+4.6,0);
+
+    var rightLeg=art(true);
+    rightLeg.position.set(bodyWidth*0.5-0.5,bodyHeight/2+2,0);
+
+    var leftLeg=art(true);
+    leftLeg.position.set(-(bodyWidth*0.5-0.5),bodyHeight/2+2,0);
+
+    var head=new THREE.Mesh(cubeGeometry,Material);
+    //head.scale.set(bodyWidth,bodyHeight,bodyDepth);
+    head.position.set(0,bodyHeight*2 +0.4,0);
+
+    humanBody.add(head);
+    humanBody.add(rightArm);
+    humanBody.add(leftArm);
+    humanBody.add(rightLeg);
+    humanBody.add(leftLeg);
+    return humanBody
+
+}
+function rollerBlade(){
+
+
+    var geometryUpper = new THREE.CylinderBufferGeometry(
+        0.65, 0.55, 0.7,
+        heightSegments, heightSegments,
+        true,
+        Math.PI * 0.15,//start
+        Math.PI * 1.8);//hou much is open 
+    
+    var lowerGeometry=  new THREE.BoxBufferGeometry(0.7,0.7,2)
+
+    var radiusTop =  0.15;  
+
+    var radiusBottom =  0.15;  
+    
+    var height =  0.3;  
+    
+    var radialSegments = 11;  
+    
+    const geometryWheel = new THREE.CylinderBufferGeometry(
+        radiusTop, radiusBottom, height, radialSegments);
+
+    var rollerMaterial = new THREE.MeshPhongMaterial({color: 0xEA330C, fog: true});
+    
+    var upperPart= new THREE.Mesh(geometryUpper, rollerMaterial);
+    var lowerPart= new THREE.Mesh(lowerGeometry, rollerMaterial);
+    //rollerMaterial.map.set(texture);
+    var wheel1= new THREE.Mesh(geometryWheel, rollerMaterial);
+    var wheel2= new THREE.Mesh(geometryWheel, rollerMaterial);
+    var wheel3= new THREE.Mesh(geometryWheel, rollerMaterial);
+
+    lowerPart.position.set(0,-0.7,0.58)
+    wheel1.rotation.z=90*Math.PI/180
+    wheel1.position.set(0,-0.5,-0.8)
+
+    wheel2.rotation.z=90*Math.PI/180
+    wheel2.position.set(0,-0.5,0)
+
+    wheel3.rotation.z=90*Math.PI/180
+    wheel3.position.set(0,-0.5,0.8)
+
+    upperPart.add(lowerPart);
+    lowerPart.add(wheel1)
+    lowerPart.add(wheel2)
+    lowerPart.add(wheel3)
+
+    roller_wheel.push(wheel1);
+    roller_wheel.push(wheel2);
+    roller_wheel.push(wheel3);
+
+    return upperPart;
+}
+
+
+function art( isLeg){
+    var pivotGeometry = new THREE.SphereBufferGeometry(
+        radius, widthSegments, heightSegments);
+  
+    var pivotMaterial = new THREE.MeshPhongMaterial({color: 0xFFFF00, fog: true});
+
+    var cubeGeometry= new THREE.CylinderBufferGeometry(
+        0.5, 0.5, 2, 10);
+    //THREE.BoxBufferGeometry(1,2,1)
+
+    var pivot1 = new THREE.Mesh(pivotGeometry, pivotMaterial);
+    //pivot1.position.set(0.,4.,0.)
+    pivot1.castShadow = true; //default is false
+    pivot1.receiveShadow = true; //default
+    var upperArt= new THREE.Mesh(cubeGeometry, pivotMaterial);
+    upperArt.position.set(0.,-0.7,0.)
+    upperArt.castShadow = true; //default is false
+    upperArt.receiveShadow = true; //default
+
+    var pivot2 = new THREE.Mesh(pivotGeometry, pivotMaterial);
+    pivot2.position.set(0.,-1,0.)
+    
+    var lowerArt= new THREE.Mesh(cubeGeometry, pivotMaterial);
+    lowerArt.position.set(0.,-1,0.)
+    lowerArt.castShadow = true; //default is false
+    lowerArt.receiveShadow = true; //default
+
+    pivot1.add(upperArt)
+    upperArt.add(pivot2)
+    pivot2.add(lowerArt)
+
+
+    if(isLeg){
+        var r=rollerBlade()
+        r.position.set(0,-0.68,0);
+        lowerArt.add(r)
+    }
+
+    return pivot1
+}
+
 export function streetLamp(){
     var bodymaterial = new THREE.MeshPhongMaterial({ color: 0x8B8381 } );
     var geometry=new THREE.BoxGeometry( 1, 1, 2 );
