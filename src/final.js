@@ -13,10 +13,14 @@ import {streetLamp,people, portiere, ball, humanStructure} from '../src/Shape/sh
 
 var clock = new THREE.Clock();
 
-
+var errorSwitch=false,errorForShot=false;
+var errorProb= 0.3;
+var GOAL=false;
+var attempts=[];
 
 //trhee object
 const loader = new THREE.TextureLoader();
+var update =0.2;
 
 
 var collisions=[];
@@ -24,7 +28,7 @@ var collisions=[];
 var renderer;
 var scene,Bscene;
 var bgMesh;
-var balla,goal,hitGoal,hitPost,hitTarget;
+var balla,goal,fuoriDx,fuoriSx,fuoriUp;
 var camera;
 var human;
 var light_a=[];
@@ -64,7 +68,7 @@ var controls
 //
 
 
-function calculateCollisionPoints( mesh,type,isPalla) { 
+function calculateCollisionPoints( mesh,type,idArray) { 
     // Compute the bounding box after scale, translation, etc.
     var bbox = new THREE.Box3().setFromObject(mesh);
    
@@ -77,11 +81,11 @@ function calculateCollisionPoints( mesh,type,isPalla) {
       zMin: bbox.min.z,
       zMax: bbox.max.z,
     };
-    if(!isPalla){
+    if(idArray>=collisions.length){
         collisions.push( bounds );
     }
     else{
-        collisions.splice(0,1,bounds);
+        collisions.splice(idArray,1,bounds);
     }
   }
 
@@ -149,10 +153,60 @@ function specchio(){
     const mesh = new THREE.Mesh(planeGeo, planeMat);
     
     mesh.receiveShadow = true;
-    mesh.position.set(50,9,0);
+    mesh.position.set(52.5,9,0);
     mesh.rotation.y = Math.PI/2;
     return mesh;
 }
+
+function fuorisx(){
+    
+    const planeGeo = new THREE.PlaneBufferGeometry(35,20);
+    const planeMat = new THREE.MeshPhongMaterial({
+        color: 0xFF0000,
+    side: THREE.DoubleSide,
+    fog: false,
+    });
+    const mesh = new THREE.Mesh(planeGeo, planeMat);
+    
+    mesh.receiveShadow = true;
+    mesh.position.set(51.5,9,-47);
+    mesh.rotation.y = Math.PI/2;
+    return mesh;
+  
+}
+
+function fuoridx(){
+    
+    const planeGeo = new THREE.PlaneBufferGeometry(35,20);
+    const planeMat = new THREE.MeshPhongMaterial({
+        color: 0x0000FF,
+    side: THREE.DoubleSide,
+    fog: false,
+    });
+    const mesh = new THREE.Mesh(planeGeo, planeMat);
+    
+    mesh.receiveShadow = true;
+    mesh.position.set(51.5,9,47);
+    mesh.rotation.y = Math.PI/2;
+    return mesh;
+}
+
+function fuoriup(){
+    
+    const planeGeo = new THREE.PlaneBufferGeometry(55+70,50);
+    const planeMat = new THREE.MeshPhongMaterial({
+        color: 0xFFF000,
+    side: THREE.DoubleSide,
+    fog: false,
+    });
+    const mesh = new THREE.Mesh(planeGeo, planeMat);
+    
+    mesh.receiveShadow = true;
+    mesh.position.set(51.5,43.5,0);
+    mesh.rotation.y = Math.PI/2;
+    return mesh;
+}
+
 
 
 function plane(a,b){
@@ -227,20 +281,37 @@ function detectCollisions() {
  
   // Run through each object and detect if there is a collision.
   for ( var index = 1; index < collisions.length; index ++ ) {
- 
+   
     if (collisions[ index ].type == 'collision' ) {
       if ( ( collisions[ 0 ].xMin <= collisions[ index ].xMax && collisions[ 0 ].xMax >= collisions[ index ].xMin ) &&
          ( collisions[ 0 ].yMin <= collisions[ index ].yMax && collisions[ 0 ].yMax >= collisions[ index ].yMin) &&
          ( collisions[ 0 ].zMin <= collisions[ index ].zMax && collisions[ 0 ].zMax >= collisions[ index ].zMin) ) {
         // We hit a solid object! Stop all movements.
-        console.log("GOAL");
-        return true;
-       
+ 
+
+        if(index==1){
+            console.log("GOAL");
+            GOAL=true;
+        }
+        else{
+            console.log("MISS");
+            tween1.stop();
+            var pos = {x:collisions[0].xMax-0.5,y:collisions[0].yMax-0.5,z:collisions[0].zMax-0.5};
+            var tar = {x:pos.x - (10+Math.random()*20),y:1,z:pos.z-Math.random()*5+Math.random()*5};
+            
+            new TWEEN.Tween(pos).to(tar, 2000).onUpdate(()=>{balla.position.x=pos.x;
+                                                            balla.position.y=pos.y;
+                                                            balla.position.z=pos.z;
+                                                            balla.rotation.x+=Math.random()})
+                                                            .easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out)).start();
+        }
+ 
+        // Move the object in the clear. Detect the best direction to move.
       }
     }
   }
 
-  return false;
+  return GOAL;
 }
 
 
@@ -263,9 +334,13 @@ window.onload= function(){
     plane(planeA,planeB);
     fondoCampo();
     goal = specchio();
-
-    scene.add(camera)
-
+    
+    scene.add(camera);
+    fuoriDx=fuoridx();
+    fuoriSx=fuorisx();
+    fuoriUp=fuoriup();
+   
+    
     human=humanStructure()
     human.position.x=-15;
     human.rotation.y=Math.PI/2;
@@ -275,9 +350,20 @@ window.onload= function(){
 
     scene.add(balla);
     console.log(balla.position.z)
-    calculateCollisionPoints(balla,"collision",true);
-    calculateCollisionPoints(goal,"collision",false);
-    console.log(collisions);
+    var port=portiere();
+    port.translateX(planeA/2-10)
+    port.translateZ(-20)
+    port.rotateY(90*Math.PI/180)
+
+    scene.add(port)
+    calculateCollisionPoints(balla,"collision",0);
+    calculateCollisionPoints(goal,"collision",1);
+    calculateCollisionPoints(port,"collision",2);
+    calculateCollisionPoints(fuoriUp,"collision",3);
+     calculateCollisionPoints(fuoriDx,"collision",4);
+     calculateCollisionPoints(fuoriSx,"collision",5);
+    
+    
     {var color = 0x89846c;
         var intensity = 0.3;
         var aLight = new THREE.AmbientLight(color, intensity);
@@ -285,14 +371,13 @@ window.onload= function(){
     }
 
 
-    var port=portiere();
-    port.translateX(planeA/2-10)
-    port.translateZ(-20)
-    port.rotateY(90*Math.PI/180)
+    
+    
+     tween= new TWEEN.Tween(port.position).to({z:"+40"},3000).repeat(Infinity).yoyo(true).onUpdate(()=>{
+        calculateCollisionPoints(port,"collision",2);
+     }).start()
+    
 
-    scene.add(port)
-
-     tween= new TWEEN.Tween(port.position).to({z:"+40"},3000).repeat(Infinity).yoyo(true).start()
 var d=-1
 for(var i=0;i<3;i++){
     var sre=streetLamp()
@@ -309,6 +394,7 @@ for(var i=0;i<3;i++){
     var spalto=people(planeA,gif)
     scene.add(spalto)
     loadModel();
+
 
 
   
@@ -352,20 +438,47 @@ function tweennala(balla,position,target,target2,pot,rot){
             else if(rot=="="){
                 balla.rotation.z -=0.05+Math.random()*0.1;  
             }
-            calculateCollisionPoints(balla,"collision",true);
+            calculateCollisionPoints(balla,"collision",0);
             if(collisions.length>0){
                 if(detectCollisions()){
                     goal=true
                 }
             }
-             if(balla.position.x>=56. &&!notStartedSecondTween){
+             if(balla.position.x>=56.5 &&!notStartedSecondTween&&GOAL){
                  notStartedSecondTween=true;
-                 tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).start();
+                 tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).onUpdate(()=>{balla.rotation.y +=0.05+Math.random()*0.1;  }).start();
                  target.y=target2.y;
                  target.x=target2.x;
+                 
                  tween2.easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out));
+                 console.log(balla.rotation);
+                 
+                 var tween3 = new TWEEN.Tween(balla.rotation).to({},3500).onUpdate(()=>{
+                     
+                     if((balla.rotation.x).toFixed(2)>0.){
+                        balla.rotation.x-=update;
+                     }
+                     else if((balla.rotation.x).toFixed(2)<0.){
+                        balla.rotation.x+=update;
+                     }
+                     if((balla.rotation.y).toFixed(2)>0.){
+                        balla.rotation.y-=update;
+                     }
+                     else if((balla.rotation.y).toFixed(2)<0.){
+                        balla.rotation.y+=update;
+                     }
+                     if((balla.rotation.z).toFixed(2)>0.){
+                        balla.rotation.z-=update;
+                     }
+                     else if((balla.rotation.z).toFixed(2)<0.){
+                        balla.rotation.z+=update;
+                     }
+                     update=update/2;
+                 });
+                tween2.chain(tween3);
              }
             }); 
+            
            //tween1.easing(createNoisyEasing(0.1,TWEEN.Easing.
                //Back.Out));
                tween1.onComplete(
@@ -383,51 +496,71 @@ function createNoisyEasing(randomProportion, easingFunction) {
         return 0.9*easingFunction(k)
     }
 }
+
+function randomSign(){
+    return Math.random()>=0.5?-1:1;
+}
 function ShotBall(balla,dir){
-    console.log(dir);
+    ;
+    if(errorSwitch){
+       if(Math.random()>errorProb){
+            errorForShot=true;
+        }
+    }
+    console.log(errorForShot)
     var pot = 1000;
     var t;
     switch(dir){
         
         case "rightLow":
-             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:2*20}; 
-             var target2 = { x:64, y: 1}; 
+             var target,finalZ = Math.random()*2*20;;
+             var position = { x : 0, y: 1, z:0}; errorForShot==true?  target = { x : 57, y: 5+Math.random()*1.5 ,z:finalZ}:(target={ x : 57, y: 5 ,z:20},finalZ=20); 
+             
+             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5}; 
              
              t=tweennala(balla,position,target,target2,pot,"+");
              break;
 
         case "rightHigh":
-             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:20}; 
-             var target2 = { x:64, y: 1}; 
+            var target, finalZ = Math.random()*2*20;
+             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:20},finalZ=20);
+             var target2 = { x:64-Math.random()*2, y: 1,z:finalZ-Math.random()*1.5}; 
              
              t=tweennala(balla,position,target,target2,pot,"+");
              break;
         case "centerLow":
-             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:0}; 
-             var target2 = { x:64, y: 1}; 
+            var target,finalZ=randomSign()*Math.random()*2*3;
+             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*1.5 ,z:finalZ}:(target = { x : 57, y: 5 ,z:0},finalZ=0);
+             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5+Math.random()*1.5}; 
              
              t=tweennala(balla,position,target,target2,pot,"=");
              break;
         case "centerHigh":
-             var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:0}; 
-             var target2 = { x:64, y: 1};
+            var target,finalZ=randomSign()*Math.random()*2*3;
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:0},finalZ=0);
+             var target2 = {x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5+Math.random()*1.5};
              
              t=tweennala(balla,position,target,target2,pot,"=");
              break;
         case "leftHigh":
-                var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 17 ,z:-20}; 
-                var target2 = { x:64, y: 1};
+            var target,finalZ=-(Math.random()*2*20)-(Math.random()*2*20);
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:-20},finalZ=-20);
+            var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ+Math.random()*1.5};
                 
                 t=tweennala(balla,position,target,target2,pot,"-");
                 break;
         case "leftLow":
-                    var position = { x : 0, y: 1, z:0}; var target = { x : 57, y: 5 ,z:-20}; 
-                    var target2 = { x:64, y: 1}; 
+            var target,finalZ=-(Math.random()*2*20)-(Math.random()*2*20);
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 5 ,z:-20},finalZ=-20);
+            var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ+Math.random()*1.5}; 
                     
+
                     t=tweennala(balla,position,target,target2,pot,"-");
                     break;
     }
+    errorForShot=false;
    return t;
+
 }
 
 
@@ -476,6 +609,12 @@ document.onkeydown=function(e){
         notStarted=true;
         dir="centerLow";
      }
+     else if (event.code == 'KeyE' && !notStarted) {
+            
+        errorSwitch=!errorSwitch;
+        errorSwitch==true?alert("Robot Can miss"):alert("Robot won't miss ");
+        
+     }
 
      if(dir != "" && !kciking){
         kciking=true
@@ -487,7 +626,7 @@ document.onkeydown=function(e){
 
 function runAndKick(dir=""){
     var time=3000/2;
-    var tweenBody= new TWEEN.Tween(human.position,HumanGroup).to({x:"+3.4"},time).repeat(3).yoyo(false).start()
+    var tweenBody= new TWEEN.Tween(human.position,HumanGroup).to({x:"+3.4"},time/2).repeat(3).yoyo(false).start()
     var tweenLowerLeg1= new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: [-45*Math.PI/180,45*Math.PI/180]},time).repeat(3).yoyo(true).start()
     var tweenLowerLeg2= new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x:  [45*Math.PI/180,-45*Math.PI/180]},time).repeat(3).yoyo(true)
     var tweenLowerLeg1_2= new TWEEN.Tween(human.children[4].children[0].children[0].rotation,HumanGroup).to({x: [45*Math.PI/180,0]},time).repeat(3).yoyo(true).start()
