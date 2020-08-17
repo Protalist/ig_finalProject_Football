@@ -303,7 +303,7 @@ function loadModel2(){
         // apply texture
         object.traverse(
             function (child){
-                if (child.name == "004"){
+                if (child.name == "004" || child.name == "005" ){
                     console.log(child)
                     child.visible =false
                 }
