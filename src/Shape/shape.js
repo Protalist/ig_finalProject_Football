@@ -151,19 +151,25 @@ function art( isLeg){
 export function streetLamp(){
     var bodymaterial = new THREE.MeshPhongMaterial({ color: 0x8B8381 } );
     var geometry=new THREE.BoxGeometry( 1, 1, 2 );
-    var GeometryLamp = new THREE.CylinderBufferGeometry(0.5, 0.5, 30, 10);
+    var GeometryLamp = new THREE.CylinderBufferGeometry(0.5, 0.5, 40, 10);
    
     var pole= new THREE.Mesh( GeometryLamp, bodymaterial );
-    pole.position.set(0,30/2,0)
+    pole.position.set(0,40/2,0)
    
     var pole2= new THREE.Mesh(geometry,bodymaterial);
-    pole2.position.set(0.0,30.0,0.5);
+    pole2.position.set(0.0,40.0,0.5);
 
     var sLight=new THREE.SpotLight(0xFFFFFF,0.3)
-    sLight.position.set(0.0,30.0,1.0)
+    sLight.position.set(0.0,40.0,1.0)
     sLight.angle=35*Math.PI/180
-    sLight.target.position.set(0.0,0.0,12.0)
-    sLight.castShadow = true;
+    sLight.target.position.set(0.0,0.0,15.0)
+    sLight.castShadow = false;
+
+    sLight.shadow.camera.left = 50;  
+    sLight.shadow.camera.right = -50;  
+    sLight.shadow.camera.top=30;
+    sLight.shadow.camera.bottom=-30;
+
     var street = new THREE.Group();
 
     street.add(pole);
@@ -180,28 +186,31 @@ export function people(len, ani){
     const loader = new THREE.TextureLoader();
     var ttxt=loader.load('../src/texture/stadium.png');
     ttxt.flipY=true
+    ttxt.rotation=90*Math.PI/180
      ani.push( new TextureAnimator( ttxt, 23, 1, 23, 75 ));
-    var  generalM = new THREE.MeshPhongMaterial({ color: 0x8B8381,
+    var  generalM = new THREE.MeshBasicMaterial({ color: 0x8B8381,
     map: ttxt } );
+
+    var  generalM2 = new THREE.MeshBasicMaterial({ color: 0x8B8381} );
     var geometry = new THREE.CylinderBufferGeometry(10, 10, len, 3);
     
-    var spalto1= new THREE.Mesh(geometry, generalM);
+    var spalto1= new THREE.Mesh(geometry, [generalM,generalM2,generalM2,generalM2,generalM2,generalM2,generalM2,generalM2]);
     spalto1.position.set(len/2+10,5,0)
     spalto1.rotateX(-90*Math.PI/180)
 
-    var spalto2= new THREE.Mesh(geometry, generalM);
+    var spalto2= new THREE.Mesh(geometry, [generalM,generalM2,generalM2,generalM2,generalM2,generalM2,generalM2,generalM2]);
     spalto2.position.set(-(len/2+10),5,0)
     spalto2.rotateX(-90*Math.PI/180)
 
-    var spalto3= new THREE.Mesh(geometry, generalM);
+    var spalto3= new THREE.Mesh(geometry, [generalM,generalM2,generalM2,generalM2,generalM2,generalM2,generalM2,generalM2]);
     spalto3.position.set(0,5,-(len/2+10))
     spalto3.rotateX(-90*Math.PI/180)
     spalto3.rotateZ(-90*Math.PI/180)
 
-    var spalto4= new THREE.Mesh(geometry, generalM);
+    var spalto4= new THREE.Mesh(geometry, [generalM,generalM2,generalM2,generalM2,generalM2,generalM2,generalM2,generalM2]);
     spalto4.position.set(0,5,(len/2+10))
     spalto4.rotateX(-90*Math.PI/180)
-    spalto4.rotateZ(-90*Math.PI/180)
+    spalto4.rotateZ(-270*Math.PI/180)
 
 
     var spalto = new THREE.Group();
@@ -224,13 +233,7 @@ var y = 0;
 var heigh=9;
 var radius=3;
 var radius2=2;
-// shape.moveTo(x + 2.5, y + 2.5);
-// shape.bezierCurveTo(x + 2.5, y + 2.5, x + 2, y, x, y);
-// shape.bezierCurveTo(x - 3, y, x - 3, y + 3.5, x - 3, y + 3.5);
-// shape.bezierCurveTo(x - 3, y + 5.5, x - 1.5, y + 7.7, x + 2.5, y + 9.5);
-// shape.bezierCurveTo(x + 6, y + 7.7, x + 8, y + 4.5, x + 8, y + 3.5);
-// shape.bezierCurveTo(x + 8, y + 3.5, x + 8, y, x + 5, y);
-// shape.bezierCurveTo(x + 3.5, y, x + 2.5, y + 2.5, x + 2.5, y + 2.5);
+
 
 shape.arc(0,heigh,radius,0,180*Math.PI/180,false)
 
@@ -261,7 +264,7 @@ return r;
 }
 
 
-function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) 
+export function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDispDuration) 
 {	
 	// note: texture passed by reference, will be updated by the update function.
 		
@@ -305,7 +308,7 @@ export function ball(radius,howgooditlooks){
     const material = new THREE.MeshPhongMaterial();
     const mesh = new THREE.Mesh(geometry, material);
     material.map = new THREE.TextureLoader().load('../src/texture/ballTex.jpg');
-    
+    mesh.castShadow=true
     return mesh;
 
 }

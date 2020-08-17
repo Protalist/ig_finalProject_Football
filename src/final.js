@@ -4,23 +4,30 @@ import * as THREE from '../src/node_modules/three/build/three.module.js'//'https
 import { OrbitControls } from '../src/node_modules/three/examples/jsm/controls/OrbitControls.js' // 'https://unpkg.com/three@0.118.3/examples/jsm/controls/OrbitControls.js';
 
 import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoader.js';
-//import {TWEEN} from "/src/node_modules/three/examples/jsm/libs/tween.module.min.js";
+
+import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoader.js';
+
 
 
 import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
-import {streetLamp,people, portiere, ball, humanStructure} from '../src/Shape/shape.js'
-
+import {streetLamp,people, portiere, ball, humanStructure,TextureAnimator} from '../src/Shape/shape.js'
+import {changeCanvas} from "../src/Util/Util.js"
 var clock = new THREE.Clock();
 
 var errorSwitch=false,errorForShot=false;
 var errorProb= 0.3;
 var GOAL=false;
+var point=0
 var attempts=[];
 
 //trhee object
 const loader = new THREE.TextureLoader();
 var update =0.2;
+
+var canvas2 = document.getElementById('textureCanvas')
+var ctx = canvas2.getContext('2d');
+
 
 
 var collisions=[];
@@ -100,16 +107,17 @@ function light(a,b,c){
 //light.shadowCameraVisible = true;
     light.position.set(a,b,c);
     light.shadow.camera.top=30;
-    light.shadow.camera.bottom=0;
+    light.shadow.camera.bottom=-30;
     light.shadow.mapSize.width = 300;  // default
     light.shadow.mapSize.height = 300; // default
-    light.shadow.camera.near = -10.5;    // default
+    light.shadow.camera.near = -50.5;    // default
     light.shadow.camera.far = 50;     // default
-
+    light.shadow.camera.left = 50;  
+    light.shadow.camera.right = -50;  
     scene.add(light);
     light_a.push(light)
-    var helper = new THREE.CameraHelper( light.shadow.camera );
-   // scene.add( helper );
+//     var helper = new THREE.CameraHelper( light.shadow.camera );
+//    scene.add( helper );
 
     
   }
@@ -238,9 +246,7 @@ function plane(a,b){
 function loadModel(){
     var loader3 = new TDSLoader();
     var r=loader3.load( '../src/Models/p/Gate.3ds', function ( object ) {
-        // object.rotateX(90*Math.PI/180)
-        //  object.rotateY(-90*Math.PI/180)
-        // object.position.set(-planeA/2,0,0);
+
         console.log(object)
         // apply texture
         object.traverse(
@@ -264,16 +270,83 @@ function loadModel(){
         object.scale.set(0.1,0.2,0.09)
 
         scene.add( object );
-        
-        console.log("before")
-
-        console.log("after")
-
 
     } );
     
 }
 
+var texturePoint= new THREE.Texture(canvas2);
+function loadModel2(){
+    var loader3 = new FBXLoader();
+    var sp=["Line007","Line008",
+            "Line018","Line019","Line015","Line017",
+            "Line023","Line025","Line026","Line027",
+            "Line021","Line022",
+            ]
+
+    const loader = new THREE.TextureLoader();
+    var ttxt=loader.load('../src/texture/stadium.png');
+    
+    ttxt.rotation=90*Math.PI/180
+    ttxt.wrapS = THREE.RepeatWrapping;
+    ttxt.wrapT = THREE.RepeatWrapping;
+
+    ttxt.repeat.set(0.5, 1);
+     //gif.push( new TextureAnimator( ttxt, 23, 1, 23, 75 ));
+     var  generalM = new THREE.MeshPhongMaterial({ color: 0x1961BD,
+        } );
+    var r=loader3.load( '../src/Models/statuim/stadium1.FBX', function ( object ) {
+        // object.rotateX(90*Math.PI/180)
+        //  object.rotateY(-90*Math.PI/180)
+        // object.position.set(-planeA/2,0,0);
+        console.log(object)
+        // apply texture
+        object.traverse(
+            function (child){
+                if (child.name == "004"){
+                    console.log(child)
+                    child.visible =false
+                }
+
+                if (child instanceof THREE.Mesh) {
+                    if (child.name=="Box001"){
+                        var tt= loader.load('../src/texture/erba.jpg')
+                        tt.wrapS = THREE.RepeatWrapping;
+                        tt.wrapT = THREE.RepeatWrapping;
+                        tt.repeat.x=3
+                        tt.repeat.y=3
+                        child.material.map =tt;
+                    }
+
+                    if(sp.includes(child.name)){
+                        
+                        child.material=generalM;
+                    }
+
+                    if(child.name=="Box016"){
+                        
+                        child.material.map=texturePoint;
+                    }
+            child.material.needsUpdate = true;
+             child.material.side = THREE.DoubleSide;
+            child.castShadow = true; //default is false
+            child.receiveShadow = true; //default
+                }
+            }
+        )
+
+        //  object.position.set(planeA/2-2,10,0);
+         object.rotateZ(-90*Math.PI/180)
+        // object.rotateZ(-180*Math.PI/180)
+        object.scale.set(0.5,0.5,0.5)
+
+        scene.add( object );
+        
+
+
+    } );
+    
+}
 
 function detectCollisions() {
   // Get the user's current collision area.
@@ -292,9 +365,11 @@ function detectCollisions() {
         if(index==1){
             console.log("GOAL");
             GOAL=true;
+            point++
         }
         else{
             console.log("MISS");
+            point=0
             tween1.stop();
             var pos = {x:collisions[0].xMax-0.5,y:collisions[0].yMax-0.5,z:collisions[0].zMax-0.5};
             var tar = {x:pos.x - (10+Math.random()*20),y:1,z:pos.z-Math.random()*5+Math.random()*5};
@@ -318,18 +393,18 @@ function detectCollisions() {
 
 window.onload= function(){
     
-
+// b <3 g :)
     scene = new THREE.Scene();
     //scene.fog=new THREE.Fog( 'skyblue' , 1, 2);
     background()
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-    camera.position.set(0,17,17)
+    camera.position.set(-60,30,-13)
     scene.background = new THREE.Color( 'skyblue' );
 
     //var helper = new THREE.CameraHelper( camera );
    // scene.add( helper );
     
-    light(-2, 4, 8);
+    light(-2, 4, -8);
 
     plane(planeA,planeB);
     fondoCampo();
@@ -381,19 +456,25 @@ window.onload= function(){
 var d=-1
 for(var i=0;i<3;i++){
     var sre=streetLamp()
-    sre.position.set(d*(planeA/2-10),0,planeA/2)
+    sre.position.set(d*(planeA/2-10),15,planeA/2-7)
     sre.rotateY(180*Math.PI/180)
+
+    // var helper = new THREE.CameraHelper( sre.children[2].shadow.camera );
+    // scene.add( helper );
     scene.add(sre)
 
     var sre2=streetLamp()
-    sre2.position.set(d*(planeA/2-10),0,-planeA/2)
+    sre2.position.set(d*(planeA/2-10),15,-planeA/2)
     sre2.rotateY(0*Math.PI/180)
+    // var helper = new THREE.CameraHelper( sre2.children[2].shadow.camera );
+    // scene.add( helper );
     scene.add(sre2)
     d++
 }
-    var spalto=people(planeA,gif)
-    scene.add(spalto)
+    // var spalto=people(planeA,gif)
+    // scene.add(spalto)
     loadModel();
+    loadModel2();
 
 
 
@@ -415,6 +496,16 @@ for(var i=0;i<3;i++){
     renderer.render( scene, camera );
     
     controls = new OrbitControls(camera,renderer.domElement);
+
+    controls.keys = {
+        LEFT: 65, //a
+        UP: 87, // w
+        RIGHT: 68, // d 
+        BOTTOM: 83 // s 
+    }
+
+    controls.target=human.position
+
     controls.update();
 
     animate(0.00);
@@ -565,10 +656,20 @@ function ShotBall(balla,dir){
 
 
 function animate(time){
+    changeCanvas(ctx,canvas2,point)
+    if (resizeRendererToDisplaySize(renderer)) {
+        const canvas = renderer.domElement;
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        camera.updateProjectionMatrix();
+      }
+
+
+      
     var delta = clock.getDelta(); 
     requestAnimationFrame( animate );
 
 
+    texturePoint.needsUpdate = true;
     TWEEN.update(time);
     HumanGroup.update(time)
     controls.update();
@@ -579,6 +680,13 @@ function animate(time){
 }
 
 var kciking=false;
+
+var d = new Date();
+
+var timeZ=0;
+var timeY=0;
+var timeX=0;
+
 document.onkeydown=function(e){
 
     var dir=""
@@ -621,12 +729,50 @@ document.onkeydown=function(e){
         runAndKick(dir);
         dir=""
      }
+
+
+     if(event.code== "ArrowLeft"){
+        timeZ-=1;
+     }
+     if(event.code== "ArrowRight"){
+        timeZ+=1;
+     }
+
+     if(event.code== "ArrowUp"){
+        timeY+=1;
+     }
+
+     if(event.code== "ArrowDown"){
+         if(timeY>=0){
+            timeY-=1;
+         }
+
+     }
+
+
+     if(event.code== "Enter"){
+        timeX+=1;
+     }
+console.log(timeX)
 }
 
 
+
+document.onkeyup=function(){
+var dir="c"
+    if(event.code== "Enter"){
+        console.log("spara")
+        if(!kciking){
+            kciking=true
+            runAndKick(dir);
+            dir=""
+         }
+     }
+}
+
 function runAndKick(dir=""){
-    var time=3000/2;
-    var tweenBody= new TWEEN.Tween(human.position,HumanGroup).to({x:"+3.4"},time/2).repeat(3).yoyo(false).start()
+    var time=3000/4;
+    var tweenBody= new TWEEN.Tween(human.position,HumanGroup).to({x:"+3.4"},time).repeat(3).yoyo(false).start()
     var tweenLowerLeg1= new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: [-45*Math.PI/180,45*Math.PI/180]},time).repeat(3).yoyo(true).start()
     var tweenLowerLeg2= new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x:  [45*Math.PI/180,-45*Math.PI/180]},time).repeat(3).yoyo(true)
     var tweenLowerLeg1_2= new TWEEN.Tween(human.children[4].children[0].children[0].rotation,HumanGroup).to({x: [45*Math.PI/180,0]},time).repeat(3).yoyo(true).start()
@@ -664,3 +810,108 @@ function runAndKick(dir=""){
 }
 
 var HumanGroup = new TWEEN.Group()
+
+
+function ShotBall2(balla,dir){
+    console.log("inside")
+    if(errorSwitch){
+       if(Math.random()>errorProb){
+            errorForShot=true;
+        }
+    }
+    console.log(errorForShot)
+    var pot = 1000;
+    var t;
+    var target, finalZ = Math.random()*2*20;
+    var position = { x : 0, y: 1, z:0}; 
+    errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:20},finalZ=20);
+    var target2 = { x:[0,timeX/2, timeX], y: [1,timeY, 1],z:[0,timeZ,0]}; 
+    
+    t=tweennala2(balla,position,target,target2,pot,"+");
+
+   return t;
+
+}
+
+
+
+function tweennala2(balla,position,target,target2,pot,rot){
+    var goal=false
+    tween1 = new TWEEN.Tween(position).to(target, pot); //Now update the 3D mesh accordingly 
+    tween1.onUpdate(function(){ 
+    balla.position.x = position.x; 
+    balla.position.y = position.y; 
+    balla.position.z = position.z;
+    if(rot =="-"){
+        balla.rotation.y -=0.05+Math.random()*0.1;  
+    }
+    else if (rot=="+"){
+        balla.rotation.y +=0.05+Math.random()*0.1;  
+    }
+    else if(rot=="="){
+        balla.rotation.z -=0.05+Math.random()*0.1;  
+    }
+    calculateCollisionPoints(balla,"collision",0);
+    if(collisions.length>0){
+        if(detectCollisions()){
+            goal=true
+        }
+    }
+     if(balla.position.x>=56.5 &&!notStartedSecondTween&&GOAL){
+         notStartedSecondTween=true;
+         tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).onUpdate(()=>{balla.rotation.y +=0.05+Math.random()*0.1;  }).start();
+         target.y=target2.y;
+         target.x=target2.x;
+         
+         tween2.easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out));
+         console.log(balla.rotation);
+         
+         var tween3 = new TWEEN.Tween(balla.rotation).to({},3500).onUpdate(()=>{
+             
+             if((balla.rotation.x).toFixed(2)>0.){
+                balla.rotation.x-=update;
+             }
+             else if((balla.rotation.x).toFixed(2)<0.){
+                balla.rotation.x+=update;
+             }
+             if((balla.rotation.y).toFixed(2)>0.){
+                balla.rotation.y-=update;
+             }
+             else if((balla.rotation.y).toFixed(2)<0.){
+                balla.rotation.y+=update;
+             }
+             if((balla.rotation.z).toFixed(2)>0.){
+                balla.rotation.z-=update;
+             }
+             else if((balla.rotation.z).toFixed(2)<0.){
+                balla.rotation.z+=update;
+             }
+             update=update/2;
+         });
+        tween2.chain(tween3);
+     }
+    }); 
+    
+   //tween1.easing(createNoisyEasing(0.1,TWEEN.Easing.
+       //Back.Out));
+       tween1.onComplete(
+           function(){
+            notStarted=false;
+            console.log(goal)
+           }
+       )
+    return tween1
+}
+
+
+
+function resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      renderer.setSize(width, height, false);
+    }
+    return needResize;
+  }
