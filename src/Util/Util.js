@@ -10,5 +10,5 @@ export function changeCanvas(ctx,canvas,point) {
     ctx.fillStyle = 'black';
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("Point: "+point.toString(), canvas.width / 2, canvas.height / 2);
+    ctx.fillText("Points: "+point.toString(), canvas.width / 2, canvas.height / 2);
 }

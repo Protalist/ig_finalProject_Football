@@ -2,7 +2,15 @@
 <html>
 
 <head>
-  
+<style>
+    #progr{
+    position: absolute;
+  top: 8px;
+  right: 700px;
+  width:250px;
+  height:50;
+    }
+</style>
 
 <!-- <script type="text/javascript"  src="https://threejs.org/build/three.js"></script> -->
 
@@ -16,12 +24,16 @@
 
 <body>
     <canvas id="textureCanvas" hidden>123</canvas>
+    <div id="progr">  <progress id="power" value="0" max="10"    ></progress></div>
 <div id="gl-canvas"  >
+  
 </div>
+
 
 
 
 <!-- <img id="texImage2" src="../Homework2/texture/face.jpg" hidden>
 <img id="texImage1" src="texture/body.png" hidden> -->
 </body>
+
 </html>
