@@ -16,7 +16,7 @@ import {changeCanvas} from "../src/Util/Util.js"
 var clock = new THREE.Clock();
 
 var errorSwitch=false,errorForShot=false;
-var errorProb= 0.3;
+var errorProb= 0.35;
 var GOAL=false;
 var point=0;
 var pot={power:1000+500};
@@ -367,8 +367,9 @@ function detectCollisions() {
 
         if(index==1){
             console.log("GOAL");
+            
+            if(!GOAL)point++;
             GOAL=true;
-            point++
         }
         else{
             if(GOAL)return;
@@ -376,7 +377,7 @@ function detectCollisions() {
             point=0
             tween1.stop();
             var pos = {x:collisions[0].xMax-0.5,y:collisions[0].yMax-0.5,z:collisions[0].zMax-0.5};
-            var tar = {x:pos.x - (10+Math.random()*20),y:1,z:pos.z-Math.random()*5+Math.random()*5};
+            var tar = {x:pos.x - (5+Math.random()*10),y:1,z:pos.z-Math.random()*2.5+Math.random()*2.5};
             
             new TWEEN.Tween(pos).to(tar, 2000).onUpdate(()=>{balla.position.x=pos.x;
                                                             balla.position.y=pos.y;
@@ -542,9 +543,18 @@ function tweennala(balla,position,target,target2,pot,rot){
             }
              if(balla.position.x>=56.5 &&!notStartedSecondTween&&GOAL){
                  notStartedSecondTween=true;
-                 tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).onUpdate(()=>{balla.rotation.y +=0.05+Math.random()*0.1;  }).start();
+                 tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).onUpdate(()=>{
+                     balla.rotation.y +=0.05+Math.random()*0.1;  
+                    if(balla.position.z>28.5){
+                        balla.position.z=28.5;
+                    } 
+                    else if  (balla.position.z<-28.5){
+                        balla.position.z=-28.5;
+                    }
+                }).start();
                  target.y=target2.y;
                  target.x=target2.x;
+                 
                  
                  tween2.easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out));
                  console.log(balla.rotation);
@@ -596,12 +606,23 @@ function createNoisyEasing(randomProportion, easingFunction) {
 function randomSign(){
     return Math.random()>=0.5?-1:1;
 }
-function ShotBall(balla,dir){
-    if(errorSwitch){
-       if(Math.random()>errorProb){
-            errorForShot=true;
-        }
+
+function mapPowerError(){
+    var r=0;
+    for(var i=1500;i>=500;i-=100){
+        r+=0.05;
+        if(i==pot.power)break;
     }
+    return r;
+}
+function ShotBall(balla,dir){
+    console.log(pot.power);
+    if(errorSwitch){
+       if(Math.random()<(errorProb+mapPowerError())){
+            errorForShot=true;
+            console.log("Not So precise");
+        }
+   }
     
     var t;
     switch(dir){
@@ -617,34 +638,34 @@ function ShotBall(balla,dir){
 
         case "rightHigh":
             var target, finalZ = Math.random()*2*20;
-             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:20},finalZ=20);
+             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2.5 ,z:finalZ}:(target = { x : 57, y: 17 ,z:20},finalZ=20);
              var target2 = { x:64-Math.random()*2, y: 1,z:finalZ-Math.random()*1.5}; 
              
              t=tweennala(balla,position,target,target2,pot,"+");
              break;
         case "centerLow":
-            var target,finalZ=randomSign()*Math.random()*2*3;
-             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*1.5 ,z:finalZ}:(target = { x : 57, y: 5 ,z:0},finalZ=0);
+            var target,finalZ=randomSign()*Math.random()*1.5*3;
+             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*2.5 ,z:finalZ}:(target = { x : 57, y: 5 ,z:0},finalZ=0);
              var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5+Math.random()*1.5}; 
              
              t=tweennala(balla,position,target,target2,pot,"=");
              break;
         case "centerHigh":
-            var target,finalZ=randomSign()*Math.random()*2*3;
-            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:0},finalZ=0);
+            var target,finalZ=randomSign()*Math.random()*1.5*3;
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2.5 ,z:finalZ}:(target = { x : 57, y: 17 ,z:0},finalZ=0);
              var target2 = {x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5+Math.random()*1.5};
              
              t=tweennala(balla,position,target,target2,pot,"=");
              break;
         case "leftHigh":
-            var target,finalZ=-(Math.random()*2*20)-(Math.random()*2*20);
-            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:-20},finalZ=-20);
+            var target,finalZ=-(Math.random()*2*20)
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2.5 ,z:finalZ}:(target = { x : 57, y: 17 ,z:-20},finalZ=-20);
             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ+Math.random()*1.5};
                 
                 t=tweennala(balla,position,target,target2,pot,"-");
                 break;
         case "leftLow":
-            var target,finalZ=-(Math.random()*2*20)-(Math.random()*2*20);
+            var target,finalZ=-(Math.random()*2*20)
             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 5 ,z:-20},finalZ=-20);
             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ+Math.random()*1.5}; 
                     
@@ -670,7 +691,7 @@ function animate(time){
       
     var delta = clock.getDelta(); 
     requestAnimationFrame( animate );
-
+ 
 
     texturePoint.needsUpdate = true;
     TWEEN.update(time);
@@ -777,7 +798,7 @@ function powerShot(pressedKey){
                 }
             };
             document.getElementById("power").value+=0.5;
-            pot.power-=50
+            if(pot.power>500)pot.power-=50;
             
             
         }
