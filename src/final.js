@@ -11,7 +11,7 @@ import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoa
 
 import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
-import {streetLamp,people, portiere, ball, humanStructure,TextureAnimator} from '../src/Shape/shape.js'
+import {streetLamp,people, portiere, ball, humanStructure} from '../src/Shape/shape.js'
 import {changeCanvas} from "../src/Util/Util.js"
 var clock = new THREE.Clock();
 
@@ -338,7 +338,7 @@ function loadModel2(){
         //  object.position.set(planeA/2-2,10,0);
          object.rotateZ(-90*Math.PI/180)
         // object.rotateZ(-180*Math.PI/180)
-        object.scale.set(0.5,0.5,0.5)
+        object.scale.set(1.0,0.5,0.5)
 
         scene.add( object );
         
