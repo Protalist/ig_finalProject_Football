@@ -4,7 +4,7 @@ import * as THREE from '../src/node_modules/three/build/three.module.js'//'https
 import { OrbitControls } from '../src/node_modules/three/examples/jsm/controls/OrbitControls.js' // 'https://unpkg.com/three@0.118.3/examples/jsm/controls/OrbitControls.js';
 
 import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoader.js';
-
+import {OBJLoader} from '../src/node_modules/three/examples/jsm/loaders/OBJLoader.js';
 import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoader.js';
 
 
@@ -13,18 +13,28 @@ import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
 import {streetLamp,people, portiere, ball, humanStructure,TextureAnimator} from '../src/Shape/shape.js'
 import {changeCanvas} from "../src/Util/Util.js"
-var clock = new THREE.Clock();
 
+
+var clock = new THREE.Clock();
+//Ball and goal var
 var errorSwitch=false,errorForShot=false;
 var errorProb= 0.35;
 var GOAL=false;
 var point=0;
 var pot={power:1000+500};
-
+var collisions=[];
 var attempts=[];
 var pressed_key;
+var tween1,tween2;
+var notStartedSecondTween=false;
+var notStarted = false;
 
-//trhee object
+//Airplane
+var airparts=[];
+var aereoGoal;
+var tweenplane;
+var eli,eliCenter;
+//three object
 const loader = new THREE.TextureLoader();
 var update =0.2;
 
@@ -33,7 +43,7 @@ var ctx = canvas2.getContext('2d');
 
 
 
-var collisions=[];
+
 //main object in the scene
 var renderer;
 var scene,Bscene;
@@ -51,9 +61,7 @@ var gif=[];
 
 var tween
 
-var tween1,tween2;
-var notStartedSecondTween=false;
-var notStarted = false;
+
 
 
 //controlli della telecamera
@@ -137,6 +145,8 @@ function background(){
         });
     
 }
+
+
 
 function fondoCampo(){
     
@@ -242,6 +252,156 @@ function plane(a,b){
     texture_a.push(texture)
     }
 
+
+var matSel=0;
+const mats = [new THREE.MeshPhongMaterial({color: 0xFF0000,
+        side: THREE.DoubleSide}),new THREE.MeshPhongMaterial({color: 0xFF0000,
+            side: THREE.DoubleSide}),new THREE.MeshPhongMaterial({color: 0x0000FF,
+                side: THREE.DoubleSide}),]
+function loadPlane(){
+    var loaderPlane = new OBJLoader();
+    loaderPlane.load(
+        // resource URL
+        '../src/Models/Airplane/p-47-plane-3d.obj',
+        // called when resource is loaded
+        function ( object ) {
+            object.traverse(
+                function (child){
+                    if (child instanceof THREE.Mesh) {
+                     
+                //child.material.map =tt;
+                child.material =  mats[(matSel++)%3]
+                child.material.side = THREE.DoubleSide;
+                child.castShadow = true; //default is false
+                child.receiveShadow = true; //default       
+                
+                    }
+                }
+            )
+    
+             object.position.set(0,100,-100);
+            object.rotateY(90*Math.PI/180)
+            //object.rotateZ(90*Math.PI/180)
+            object.scale.set(1.5,1.5,1.5);
+            var striscia = striscione();
+            eli = elica(object);
+            
+            object.attach(striscia);
+            object.attach(eli);
+            
+           object.position.x = 110; 
+           object.position.y = 70; 
+           object.position.z-=200;
+           
+            object.name="Aereo";
+
+            object.traverse(
+                function (c){
+                    if (c instanceof THREE.Mesh) {
+                        c.material.transparent =true;
+                        c.material.opacity = .0;
+                        airparts.push(c);
+                    }
+                }
+            );
+            scene.add(object);
+            
+            
+            
+         
+        },
+        // called when loading is in progresses
+        function ( xhr ) {
+    
+            console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+    
+        },
+        // called when loading has errors
+        function ( error ) {
+            
+            console.log( 'An error happened', error );
+    
+        }
+    );
+
+
+}
+
+function elica(Ob){
+    var roundedRectShape = new THREE.Shape();
+
+     function roundedRect( ctx, x, y, width, height, radius ) {
+
+        ctx.moveTo( x, y + radius );
+        ctx.lineTo( x, y + height - radius );
+        ctx.quadraticCurveTo( x, y + height, x + radius, y + height );
+        ctx.lineTo( x + width - radius, y + height );
+        ctx.quadraticCurveTo( x + width, y + height, x + width, y + height - radius );
+        ctx.lineTo( x + width, y + radius );
+        ctx.quadraticCurveTo( x + width, y, x + width - radius, y );
+        ctx.lineTo( x + radius, y );
+        ctx.quadraticCurveTo( x, y, x, y + radius );
+        
+    } 
+    roundedRect( roundedRectShape, 0, 0, 0.8, 3, 0.5 );
+    var g=new THREE.ShapeBufferGeometry(roundedRectShape, 2);
+    var m = new THREE.MeshPhongMaterial({ color: 0xFFFFFF } );
+    var r= new THREE.Mesh(g,m);
+
+    var g1=new THREE.ShapeBufferGeometry(roundedRectShape, 2);
+    var r1= new THREE.Mesh(g1,m);
+
+    r.scale.set(1.0,2.0,1.0);
+    r1.scale.set(1.0,2.0,1.0);
+   
+   r1.position.set(-0.75,1.0,0.0);
+   r.position.set(-0.75,-7.0,0.0);
+    var group = new THREE.Mesh();
+    var geometry = new THREE.CylinderGeometry( 1, 1, 0.5, 32 );
+var material = new THREE.MeshPhongMaterial( {color: 0xFFFFFF} );
+var cylinder = new THREE.Mesh( geometry, material );
+cylinder.position.set(.0,0.0,0.0);
+cylinder.rotateX(90*Math.PI/180);
+group.add(r1);group.add(cylinder);group.add(r);
+group.position.set(-0.1,100.25,-98.6);
+group.scale.set(0.6,0.6,0.6);
+
+
+
+    return group;
+
+
+}
+
+function striscione(){
+    const texture = loader.load('../src/texture/goalTex.png');
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.magFilter = THREE.NearestFilter;
+    
+    const ret = new THREE.PlaneBufferGeometry(35,10);
+    const retMat = new THREE.MeshBasicMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+        fog: false,
+    });
+    const mesh = new THREE.Mesh(ret, retMat);
+    mesh.receiveShadow = true;
+    mesh.position.set(0,0,-3);
+    mesh.rotation.y = Math.PI/2;
+    
+    var bodymaterial = new THREE.MeshPhongMaterial({ color: 0x8B8381 } );
+   
+    var cyl2 = new THREE.CylinderBufferGeometry(0.25, 0.25, 4, 4);
+    var sustain2= new THREE.Mesh( cyl2, bodymaterial );
+    sustain2.position.set(0,0,15.5);
+    sustain2.rotateX(90*Math.PI/180);
+
+    var finalStriscione=new THREE.Object3D();
+    finalStriscione.add(mesh); finalStriscione.add(sustain2);
+    finalStriscione.position.set(0,101.5,-140);
+    return finalStriscione;
+}
 
 
 
@@ -413,8 +573,10 @@ window.onload= function(){
 
     plane(planeA,planeB);
     fondoCampo();
+    
     goal = specchio();
     
+  
     scene.add(camera);
     fuoriDx=fuoridx();
     fuoriSx=fuorisx();
@@ -480,9 +642,8 @@ for(var i=0;i<3;i++){
     // scene.add(spalto)
     loadModel();
     loadModel2();
-
-
-
+    loadPlane();
+    
   
     renderer = new THREE.WebGLRenderer();
     renderer.autoClearColor = false;
@@ -510,9 +671,9 @@ for(var i=0;i<3;i++){
     }
 
     controls.target=human.position
-
+    
     controls.update();
-
+    console.log(airparts);
     animate(0.00);
  
 }
@@ -581,6 +742,33 @@ function tweennala(balla,position,target,target2,pot,rot){
                      }
                      update=update/2;
                  });
+                 aereoGoal = scene.getObjectByName("Aereo");
+                 var startP = aereoGoal.position; var tarP = {z:600};
+                 aereoGoal.traverse(
+                    function (c){
+                        if (c instanceof THREE.Mesh) {
+                            c.material.transparent =true;
+                            c.material.opacity = 1.0;
+                            
+                        }
+                    }
+                );
+                 tweenplane = new TWEEN.Tween(startP).to({z:450},10000).onUpdate(()=>{
+                     aereoGoal.position.z = startP.z; 
+                     eli.rotation.z+=20.
+                     if(aereoGoal.position.z>=350){
+                        aereoGoal.traverse(
+                            function (c){
+                                if (c instanceof THREE.Mesh) {
+                                    c.material.transparent =true;
+                                    c.material.opacity -= 0.1;
+                                    
+                                }
+                            }
+                        );
+                     }
+                 }).start();
+                 
                 tween2.chain(tween3);
              }
             }); 
@@ -616,7 +804,8 @@ function mapPowerError(){
     return r;
 }
 function ShotBall(balla,dir){
-    console.log(pot.power);
+   
+   
     if(errorSwitch){
        if(Math.random()<(errorProb+mapPowerError())){
             errorForShot=true;
@@ -628,6 +817,7 @@ function ShotBall(balla,dir){
     switch(dir){
         
         case "rightLow":
+            
              var target,finalZ = Math.random()*2*20;;
              var position = { x : 0, y: 1, z:0}; errorForShot==true?  target = { x : 57, y: 5+Math.random()*1.5 ,z:finalZ}:(target={ x : 57, y: 5 ,z:20},finalZ=20); 
              
@@ -692,11 +882,12 @@ function animate(time){
     var delta = clock.getDelta(); 
     requestAnimationFrame( animate );
  
-
+    
     texturePoint.needsUpdate = true;
     TWEEN.update(time);
     HumanGroup.update(time)
     controls.update();
+    
    for (var g in gif){
        gif[g].update(1000*delta);
    }
