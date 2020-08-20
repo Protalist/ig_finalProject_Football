@@ -4,24 +4,37 @@ import * as THREE from '../src/node_modules/three/build/three.module.js'//'https
 import { OrbitControls } from '../src/node_modules/three/examples/jsm/controls/OrbitControls.js' // 'https://unpkg.com/three@0.118.3/examples/jsm/controls/OrbitControls.js';
 
 import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoader.js';
-
+import {OBJLoader} from '../src/node_modules/three/examples/jsm/loaders/OBJLoader.js';
 import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoader.js';
 
 
 
 import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
-import {streetLamp,people, portiere, ball, humanStructure} from '../src/Shape/shape.js'
+import {streetLamp,people, portiere, ball, humanStructure,TextureAnimator} from '../src/Shape/shape.js'
 import {changeCanvas} from "../src/Util/Util.js"
+
+
 var clock = new THREE.Clock();
-
+//Ball and goal var
 var errorSwitch=false,errorForShot=false;
-var errorProb= 0.3;
+var errorProb= 0.35;
 var GOAL=false;
-var point=0
+var point=0;
+var pot={power:1000+500};
+var collisions=[];
 var attempts=[];
+var pressed_key;
+var tween1,tween2;
+var notStartedSecondTween=false;
+var notStarted = false;
 
-//trhee object
+//Airplane
+var airparts=[];
+var aereoGoal;
+var tweenplane;
+var eli,eliCenter;
+//three object
 const loader = new THREE.TextureLoader();
 var update =0.2;
 
@@ -30,7 +43,7 @@ var ctx = canvas2.getContext('2d');
 
 
 
-var collisions=[];
+
 //main object in the scene
 var renderer;
 var scene,Bscene;
@@ -48,9 +61,7 @@ var gif=[];
 
 var tween
 
-var tween1,tween2;
-var notStartedSecondTween=false;
-var notStarted = false;
+
 
 
 //controlli della telecamera
@@ -134,6 +145,8 @@ function background(){
         });
     
 }
+
+
 
 function fondoCampo(){
     
@@ -240,6 +253,156 @@ function plane(a,b){
     }
 
 
+var matSel=0;
+const mats = [new THREE.MeshPhongMaterial({color: 0xFF0000,
+        side: THREE.DoubleSide}),new THREE.MeshPhongMaterial({color: 0xFF0000,
+            side: THREE.DoubleSide}),new THREE.MeshPhongMaterial({color: 0x0000FF,
+                side: THREE.DoubleSide}),]
+function loadPlane(){
+    var loaderPlane = new OBJLoader();
+    loaderPlane.load(
+        // resource URL
+        '../src/Models/Airplane/p-47-plane-3d.obj',
+        // called when resource is loaded
+        function ( object ) {
+            object.traverse(
+                function (child){
+                    if (child instanceof THREE.Mesh) {
+                     
+                //child.material.map =tt;
+                child.material =  mats[(matSel++)%3]
+                child.material.side = THREE.DoubleSide;
+                child.castShadow = true; //default is false
+                child.receiveShadow = true; //default       
+                
+                    }
+                }
+            )
+    
+             object.position.set(0,100,-100);
+            object.rotateY(90*Math.PI/180)
+            //object.rotateZ(90*Math.PI/180)
+            object.scale.set(1.5,1.5,1.5);
+            var striscia = striscione();
+            eli = elica(object);
+            
+            object.attach(striscia);
+            object.attach(eli);
+            
+           object.position.x = 110; 
+           object.position.y = 70; 
+           object.position.z-=200;
+           
+            object.name="Aereo";
+
+            object.traverse(
+                function (c){
+                    if (c instanceof THREE.Mesh) {
+                        c.material.transparent =true;
+                        c.material.opacity = .0;
+                        airparts.push(c);
+                    }
+                }
+            );
+            scene.add(object);
+            
+            
+            
+         
+        },
+        // called when loading is in progresses
+        function ( xhr ) {
+    
+            console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+    
+        },
+        // called when loading has errors
+        function ( error ) {
+            
+            console.log( 'An error happened', error );
+    
+        }
+    );
+
+
+}
+
+function elica(Ob){
+    var roundedRectShape = new THREE.Shape();
+
+     function roundedRect( ctx, x, y, width, height, radius ) {
+
+        ctx.moveTo( x, y + radius );
+        ctx.lineTo( x, y + height - radius );
+        ctx.quadraticCurveTo( x, y + height, x + radius, y + height );
+        ctx.lineTo( x + width - radius, y + height );
+        ctx.quadraticCurveTo( x + width, y + height, x + width, y + height - radius );
+        ctx.lineTo( x + width, y + radius );
+        ctx.quadraticCurveTo( x + width, y, x + width - radius, y );
+        ctx.lineTo( x + radius, y );
+        ctx.quadraticCurveTo( x, y, x, y + radius );
+        
+    } 
+    roundedRect( roundedRectShape, 0, 0, 0.8, 3, 0.5 );
+    var g=new THREE.ShapeBufferGeometry(roundedRectShape, 2);
+    var m = new THREE.MeshPhongMaterial({ color: 0xFFFFFF } );
+    var r= new THREE.Mesh(g,m);
+
+    var g1=new THREE.ShapeBufferGeometry(roundedRectShape, 2);
+    var r1= new THREE.Mesh(g1,m);
+
+    r.scale.set(1.0,2.0,1.0);
+    r1.scale.set(1.0,2.0,1.0);
+   
+   r1.position.set(-0.75,1.0,0.0);
+   r.position.set(-0.75,-7.0,0.0);
+    var group = new THREE.Mesh();
+    var geometry = new THREE.CylinderGeometry( 1, 1, 0.5, 32 );
+var material = new THREE.MeshPhongMaterial( {color: 0xFFFFFF} );
+var cylinder = new THREE.Mesh( geometry, material );
+cylinder.position.set(.0,0.0,0.0);
+cylinder.rotateX(90*Math.PI/180);
+group.add(r1);group.add(cylinder);group.add(r);
+group.position.set(-0.1,100.25,-98.6);
+group.scale.set(0.6,0.6,0.6);
+
+
+
+    return group;
+
+
+}
+
+function striscione(){
+    const texture = loader.load('../src/texture/goalTex.png');
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.magFilter = THREE.NearestFilter;
+    
+    const ret = new THREE.PlaneBufferGeometry(35,10);
+    const retMat = new THREE.MeshBasicMaterial({
+        map: texture,
+        side: THREE.DoubleSide,
+        fog: false,
+    });
+    const mesh = new THREE.Mesh(ret, retMat);
+    mesh.receiveShadow = true;
+    mesh.position.set(0,0,-3);
+    mesh.rotation.y = Math.PI/2;
+    
+    var bodymaterial = new THREE.MeshPhongMaterial({ color: 0x8B8381 } );
+   
+    var cyl2 = new THREE.CylinderBufferGeometry(0.25, 0.25, 4, 4);
+    var sustain2= new THREE.Mesh( cyl2, bodymaterial );
+    sustain2.position.set(0,0,15.5);
+    sustain2.rotateX(90*Math.PI/180);
+
+    var finalStriscione=new THREE.Object3D();
+    finalStriscione.add(mesh); finalStriscione.add(sustain2);
+    finalStriscione.position.set(0,101.5,-140);
+    return finalStriscione;
+}
+
 
 
 
@@ -338,7 +501,7 @@ function loadModel2(){
         //  object.position.set(planeA/2-2,10,0);
          object.rotateZ(-90*Math.PI/180)
         // object.rotateZ(-180*Math.PI/180)
-        object.scale.set(1.0,0.5,0.5)
+        object.scale.set(0.5,0.5,0.5)
 
         scene.add( object );
         
@@ -364,15 +527,17 @@ function detectCollisions() {
 
         if(index==1){
             console.log("GOAL");
+            
+            if(!GOAL)point++;
             GOAL=true;
-            point++
         }
         else{
+            if(GOAL)return;
             console.log("MISS");
             point=0
             tween1.stop();
             var pos = {x:collisions[0].xMax-0.5,y:collisions[0].yMax-0.5,z:collisions[0].zMax-0.5};
-            var tar = {x:pos.x - (10+Math.random()*20),y:1,z:pos.z-Math.random()*5+Math.random()*5};
+            var tar = {x:pos.x - (5+Math.random()*10),y:1,z:pos.z-Math.random()*2.5+Math.random()*2.5};
             
             new TWEEN.Tween(pos).to(tar, 2000).onUpdate(()=>{balla.position.x=pos.x;
                                                             balla.position.y=pos.y;
@@ -408,8 +573,10 @@ window.onload= function(){
 
     plane(planeA,planeB);
     fondoCampo();
+    
     goal = specchio();
     
+  
     scene.add(camera);
     fuoriDx=fuoridx();
     fuoriSx=fuorisx();
@@ -475,9 +642,8 @@ for(var i=0;i<3;i++){
     // scene.add(spalto)
     loadModel();
     loadModel2();
-
-
-
+    loadPlane();
+    
   
     renderer = new THREE.WebGLRenderer();
     renderer.autoClearColor = false;
@@ -505,9 +671,9 @@ for(var i=0;i<3;i++){
     }
 
     controls.target=human.position
-
+    
     controls.update();
-
+    console.log(airparts);
     animate(0.00);
  
 }
@@ -515,8 +681,9 @@ for(var i=0;i<3;i++){
 
 function tweennala(balla,position,target,target2,pot,rot){
             var goal=false
-            tween1 = new TWEEN.Tween(position).to(target, pot); //Now update the 3D mesh accordingly 
+            tween1 = new TWEEN.Tween(position).to(target, pot.power); //Now update the 3D mesh accordingly 
             tween1.onUpdate(function(){ 
+                console.log(pot.power);
             balla.position.x = position.x; 
             balla.position.y = position.y; 
             balla.position.z = position.z;
@@ -537,9 +704,18 @@ function tweennala(balla,position,target,target2,pot,rot){
             }
              if(balla.position.x>=56.5 &&!notStartedSecondTween&&GOAL){
                  notStartedSecondTween=true;
-                 tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).onUpdate(()=>{balla.rotation.y +=0.05+Math.random()*0.1;  }).start();
+                 tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).onUpdate(()=>{
+                     balla.rotation.y +=0.05+Math.random()*0.1;  
+                    if(balla.position.z>28.5){
+                        balla.position.z=28.5;
+                    } 
+                    else if  (balla.position.z<-28.5){
+                        balla.position.z=-28.5;
+                    }
+                }).start();
                  target.y=target2.y;
                  target.x=target2.x;
+                 
                  
                  tween2.easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out));
                  console.log(balla.rotation);
@@ -566,6 +742,33 @@ function tweennala(balla,position,target,target2,pot,rot){
                      }
                      update=update/2;
                  });
+                 aereoGoal = scene.getObjectByName("Aereo");
+                 var startP = aereoGoal.position; var tarP = {z:600};
+                 aereoGoal.traverse(
+                    function (c){
+                        if (c instanceof THREE.Mesh) {
+                            c.material.transparent =true;
+                            c.material.opacity = 1.0;
+                            
+                        }
+                    }
+                );
+                 tweenplane = new TWEEN.Tween(startP).to({z:450},10000).onUpdate(()=>{
+                     aereoGoal.position.z = startP.z; 
+                     eli.rotation.z+=20.
+                     if(aereoGoal.position.z>=350){
+                        aereoGoal.traverse(
+                            function (c){
+                                if (c instanceof THREE.Mesh) {
+                                    c.material.transparent =true;
+                                    c.material.opacity -= 0.1;
+                                    
+                                }
+                            }
+                        );
+                     }
+                 }).start();
+                 
                 tween2.chain(tween3);
              }
             }); 
@@ -591,19 +794,30 @@ function createNoisyEasing(randomProportion, easingFunction) {
 function randomSign(){
     return Math.random()>=0.5?-1:1;
 }
-function ShotBall(balla,dir){
-    ;
-    if(errorSwitch){
-       if(Math.random()>errorProb){
-            errorForShot=true;
-        }
+
+function mapPowerError(){
+    var r=0;
+    for(var i=1500;i>=500;i-=100){
+        r+=0.05;
+        if(i==pot.power)break;
     }
-    console.log(errorForShot)
-    var pot = 1000;
+    return r;
+}
+function ShotBall(balla,dir){
+   
+   
+    if(errorSwitch){
+       if(Math.random()<(errorProb+mapPowerError())){
+            errorForShot=true;
+            console.log("Not So precise");
+        }
+   }
+    
     var t;
     switch(dir){
         
         case "rightLow":
+            
              var target,finalZ = Math.random()*2*20;;
              var position = { x : 0, y: 1, z:0}; errorForShot==true?  target = { x : 57, y: 5+Math.random()*1.5 ,z:finalZ}:(target={ x : 57, y: 5 ,z:20},finalZ=20); 
              
@@ -614,34 +828,34 @@ function ShotBall(balla,dir){
 
         case "rightHigh":
             var target, finalZ = Math.random()*2*20;
-             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:20},finalZ=20);
+             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2.5 ,z:finalZ}:(target = { x : 57, y: 17 ,z:20},finalZ=20);
              var target2 = { x:64-Math.random()*2, y: 1,z:finalZ-Math.random()*1.5}; 
              
              t=tweennala(balla,position,target,target2,pot,"+");
              break;
         case "centerLow":
-            var target,finalZ=randomSign()*Math.random()*2*3;
-             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*1.5 ,z:finalZ}:(target = { x : 57, y: 5 ,z:0},finalZ=0);
+            var target,finalZ=randomSign()*Math.random()*1.5*3;
+             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*2.5 ,z:finalZ}:(target = { x : 57, y: 5 ,z:0},finalZ=0);
              var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5+Math.random()*1.5}; 
              
              t=tweennala(balla,position,target,target2,pot,"=");
              break;
         case "centerHigh":
-            var target,finalZ=randomSign()*Math.random()*2*3;
-            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:0},finalZ=0);
+            var target,finalZ=randomSign()*Math.random()*1.5*3;
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2.5 ,z:finalZ}:(target = { x : 57, y: 17 ,z:0},finalZ=0);
              var target2 = {x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ-Math.random()*1.5+Math.random()*1.5};
              
              t=tweennala(balla,position,target,target2,pot,"=");
              break;
         case "leftHigh":
-            var target,finalZ=-(Math.random()*2*20)-(Math.random()*2*20);
-            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:-20},finalZ=-20);
+            var target,finalZ=-(Math.random()*2*20)
+            var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2.5 ,z:finalZ}:(target = { x : 57, y: 17 ,z:-20},finalZ=-20);
             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ+Math.random()*1.5};
                 
                 t=tweennala(balla,position,target,target2,pot,"-");
                 break;
         case "leftLow":
-            var target,finalZ=-(Math.random()*2*20)-(Math.random()*2*20);
+            var target,finalZ=-(Math.random()*2*20)
             var position = { x : 0, y: 1, z:0}; errorForShot==true? target = { x : 57, y: 5+Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 5 ,z:-20},finalZ=-20);
             var target2 = { x:64-Math.random()*2-Math.random()*1.5, y: 1,z:finalZ+Math.random()*1.5}; 
                     
@@ -667,12 +881,13 @@ function animate(time){
       
     var delta = clock.getDelta(); 
     requestAnimationFrame( animate );
-
-
+ 
+    
     texturePoint.needsUpdate = true;
     TWEEN.update(time);
     HumanGroup.update(time)
     controls.update();
+    
    for (var g in gif){
        gif[g].update(1000*delta);
    }
@@ -690,6 +905,7 @@ var timeX=0;
 document.onkeydown=function(e){
 
     var dir=""
+    pressed_key=event.code;
     if(e.keyCode==115){
         renderer.shadowMap.enabled = !renderer.shadowMap.enabled;
     }
@@ -727,6 +943,7 @@ document.onkeydown=function(e){
      if(dir != "" && !kciking){
         kciking=true
         runAndKick(dir);
+        powerShot(pressed_key);
         dir=""
      }
 
@@ -758,20 +975,33 @@ console.log(timeX)
 
 
 
-document.onkeyup=function(){
-var dir="c"
-    if(event.code== "Enter"){
-        console.log("spara")
-        if(!kciking){
-            kciking=true
-            runAndKick(dir);
-            dir=""
-         }
-     }
+
+function powerShot(pressedKey){
+    var stop=false;
+    
+    window.setInterval(()=>{
+        if(!stop){
+            document.onkeyup=(a)=>{
+                
+                
+                if(a.code==pressedKey){
+                    stop=true;
+                }
+            };
+            document.getElementById("power").value+=0.5;
+            if(pot.power>500)pot.power-=50;
+            
+            
+        }
+    },75/2)
+    
+ 
+    
 }
 
 function runAndKick(dir=""){
     var time=3000/4;
+    var first=true;
     var tweenBody= new TWEEN.Tween(human.position,HumanGroup).to({x:"+3.4"},time).repeat(3).yoyo(false).start()
     var tweenLowerLeg1= new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: [-45*Math.PI/180,45*Math.PI/180]},time).repeat(3).yoyo(true).start()
     var tweenLowerLeg2= new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x:  [45*Math.PI/180,-45*Math.PI/180]},time).repeat(3).yoyo(true)
@@ -791,11 +1021,10 @@ function runAndKick(dir=""){
     var runback1=new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(1).yoyo(true).onStart(()=>{runback_2.start()}).onRepeat(()=>{runback_2.start()})
     var runback=new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(3).yoyo(true).onRepeat((obj)=>{runback1.start()}).onStart(()=>{runback1_2.start(); tweenBodyN.start()}).onComplete(()=>{kciking=false})
 
- 
-    if(dir!=""){
-        var t=ShotBall(balla,dir);
-        tweenLowerLeg2.chain(t)
-    }
+   
+        
+    
+    
     tweenLowerLeg1.chain(tweenkick)
     tweenkick.chain(runback)
 
@@ -807,101 +1036,19 @@ function runAndKick(dir=""){
     tweenArm1.start()
     tweenArm2.start()
     tweenLowerLeg2.start()
+    setTimeout(()=>{
+        if(dir!=""){
+            var t=ShotBall(balla,dir);
+            tweenLowerLeg2.chain(t)
+        }
+    },740);
+    
 }
 
 var HumanGroup = new TWEEN.Group()
 
 
-function ShotBall2(balla,dir){
-    console.log("inside")
-    if(errorSwitch){
-       if(Math.random()>errorProb){
-            errorForShot=true;
-        }
-    }
-    console.log(errorForShot)
-    var pot = 1000;
-    var t;
-    var target, finalZ = Math.random()*2*20;
-    var position = { x : 0, y: 1, z:0}; 
-    errorForShot==true? target = { x : 57, y: 17+randomSign()*Math.random()*2 ,z:finalZ}:(target = { x : 57, y: 17 ,z:20},finalZ=20);
-    var target2 = { x:[0,timeX/2, timeX], y: [1,timeY, 1],z:[0,timeZ,0]}; 
-    
-    t=tweennala2(balla,position,target,target2,pot,"+");
 
-   return t;
-
-}
-
-
-
-function tweennala2(balla,position,target,target2,pot,rot){
-    var goal=false
-    tween1 = new TWEEN.Tween(position).to(target, pot); //Now update the 3D mesh accordingly 
-    tween1.onUpdate(function(){ 
-    balla.position.x = position.x; 
-    balla.position.y = position.y; 
-    balla.position.z = position.z;
-    if(rot =="-"){
-        balla.rotation.y -=0.05+Math.random()*0.1;  
-    }
-    else if (rot=="+"){
-        balla.rotation.y +=0.05+Math.random()*0.1;  
-    }
-    else if(rot=="="){
-        balla.rotation.z -=0.05+Math.random()*0.1;  
-    }
-    calculateCollisionPoints(balla,"collision",0);
-    if(collisions.length>0){
-        if(detectCollisions()){
-            goal=true
-        }
-    }
-     if(balla.position.x>=56.5 &&!notStartedSecondTween&&GOAL){
-         notStartedSecondTween=true;
-         tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).onUpdate(()=>{balla.rotation.y +=0.05+Math.random()*0.1;  }).start();
-         target.y=target2.y;
-         target.x=target2.x;
-         
-         tween2.easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out));
-         console.log(balla.rotation);
-         
-         var tween3 = new TWEEN.Tween(balla.rotation).to({},3500).onUpdate(()=>{
-             
-             if((balla.rotation.x).toFixed(2)>0.){
-                balla.rotation.x-=update;
-             }
-             else if((balla.rotation.x).toFixed(2)<0.){
-                balla.rotation.x+=update;
-             }
-             if((balla.rotation.y).toFixed(2)>0.){
-                balla.rotation.y-=update;
-             }
-             else if((balla.rotation.y).toFixed(2)<0.){
-                balla.rotation.y+=update;
-             }
-             if((balla.rotation.z).toFixed(2)>0.){
-                balla.rotation.z-=update;
-             }
-             else if((balla.rotation.z).toFixed(2)<0.){
-                balla.rotation.z+=update;
-             }
-             update=update/2;
-         });
-        tween2.chain(tween3);
-     }
-    }); 
-    
-   //tween1.easing(createNoisyEasing(0.1,TWEEN.Easing.
-       //Back.Out));
-       tween1.onComplete(
-           function(){
-            notStarted=false;
-            console.log(goal)
-           }
-       )
-    return tween1
-}
 
 
 
