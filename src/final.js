@@ -30,6 +30,8 @@ var notStartedSecondTween=false;
 var notStarted = false;
 
 //Airplane
+var aereoStartPosition ={x:110,y:70,z:-200}
+
 var airparts=[];
 var aereoGoal;
 var tweenplane;
@@ -46,7 +48,7 @@ var HumanGroup = new TWEEN.Group()
 
 var audienceGroup= new TWEEN.Group() 
 
-var tween
+var tween,tween3;
 
 var tweenIdleHuman2,tweenIdleHuman1
 
@@ -293,9 +295,9 @@ function loadPlane(){
             object.attach(striscia);
             object.attach(eli);
             
-           object.position.x = 110; 
-           object.position.y = 70; 
-           object.position.z-=200;
+           object.position.x = aereoStartPosition.x; 
+           object.position.y = aereoStartPosition.y; 
+           object.position.z = aereoStartPosition.z;
            
             object.name="Aereo";
 
@@ -549,9 +551,7 @@ function detectCollisions() {
                                                             balla.rotation.x+=Math.random()})
                                                             .easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out)).onComplete(
                                                                 ()=>{
-                                                                    notStarted=false;
-                                                                    document.getElementById("power").value=0.0;
-                                                                    balla.position.set(0,1,0)
+                                                                   newShot();
                                                                 }
                                                             ).start();
         }
@@ -757,7 +757,7 @@ function tweennala(balla,position,target,target2,pot,rot){
                  tween2.easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out));
                  console.log(balla.rotation);
                  
-                 var tween3 = new TWEEN.Tween(balla.rotation).to({},3500).onUpdate(()=>{
+                  tween3 = new TWEEN.Tween(balla.rotation).to({},3500).onUpdate(()=>{
                      
                      if((balla.rotation.x).toFixed(2)>0.){
                         balla.rotation.x-=update;
@@ -778,7 +778,7 @@ function tweennala(balla,position,target,target2,pot,rot){
                         balla.rotation.z+=update;
                      }
                      update=update/2;
-                 });
+                 }).onComplete(()=>{newShot()});
                  aereoGoal = scene.getObjectByName("Aereo");
                  var startP = aereoGoal.position; var tarP = {z:600};
                  aereoGoal.traverse(
@@ -790,20 +790,23 @@ function tweennala(balla,position,target,target2,pot,rot){
                         }
                     }
                 );
-                 tweenplane = new TWEEN.Tween(startP).to({z:450},10000).onUpdate(()=>{
+                 tweenplane = new TWEEN.Tween(startP).to({z:400},7000).onUpdate(()=>{
                      aereoGoal.position.z = startP.z; 
                      eli.rotation.z+=20.
-                     if(aereoGoal.position.z>=350){
+                     if(aereoGoal.position.z>=200){
                         aereoGoal.traverse(
                             function (c){
                                 if (c instanceof THREE.Mesh) {
                                     c.material.transparent =true;
-                                    c.material.opacity -= 0.1;
+                                    c.material.opacity -= 0.05;
                                     
                                 }
                             }
                         );
                      }
+                 }).onComplete(()=>{
+                     aereoGoal.position.set(aereoStartPosition.x,aereoStartPosition.y,aereoStartPosition.z);
+
                  }).start();
                  
                 tween2.chain(tween3);
@@ -814,13 +817,11 @@ function tweennala(balla,position,target,target2,pot,rot){
                //Back.Out));
                tween1.onComplete(
                    function(){
-                    notStarted=false;
-                    console.log(goal)
+                   
                     if(goal){
                         point++
                     }
-                    document.getElementById("power").value=0.0;
-                    balla.position.set(0,1,0)
+                   //newShot();
                    }
                )
             return tween1
@@ -1082,6 +1083,7 @@ document.onkeyup=function(e){
 function runAndKick(dir=""){
     tweenIdleHuman1.stop()
     tweenIdleHuman2.stop()
+   
     var time=3000/4;
     var first=true;
     
@@ -1133,8 +1135,13 @@ function runAndKick(dir=""){
 
 
 
-
-
+function newShot(){
+    notStartedSecondTween=false;
+    GOAL=false;
+    notStarted=false;
+    balla.position.set(0,1,0);
+    document.getElementById("power").value=0.0;
+}
 
 
 function resizeRendererToDisplaySize(renderer) {
