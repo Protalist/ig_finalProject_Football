@@ -1,5 +1,6 @@
 
 import * as THREE from '../node_modules/three/build/three.module.js'
+import TWEEN from '../node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
 
 //dimension of the pivot
@@ -150,7 +151,7 @@ return pivot1
 
 export function streetLamp(){
 var bodymaterial = new THREE.MeshPhongMaterial({ color: 0x8B8381 } );
-var geometry=new THREE.BoxGeometry( 1, 1, 2 );
+var geometry=new THREE.BoxGeometry( 1, 1, 4 );
 var GeometryLamp = new THREE.CylinderBufferGeometry(0.5, 0.5, 40, 10);
 
 var pole= new THREE.Mesh( GeometryLamp, bodymaterial );
@@ -311,4 +312,49 @@ material.map = new THREE.TextureLoader().load('../src/texture/ballTex.jpg');
 mesh.castShadow=true
 return mesh;
 
+}
+
+
+export function audience(color=0xffffff){
+
+
+
+    var loader = new THREE.TextureLoader();
+    var ttxt=loader.load('../src/texture/audience_sprite.png');
+
+    var obj={map: ttxt,
+        color: color }
+
+    var spriteMaterial = new THREE.SpriteMaterial( obj );
+    var sprite = new THREE.Sprite( spriteMaterial );
+    sprite.scale.set(5,5,5)
+    return sprite
+}
+
+export function multipleAudience(N,M,xMin,xMax,yMin,yMax,zMin,zMax,t){
+    var X=xMax-xMin;
+    var Y=yMax-yMin;
+    var Z=zMax-zMin;
+    var xStep=X/M;
+    var yStep=Y/N;
+    var zStep=Z/N;
+
+    var groupPeople=new THREE.Group();
+
+    var person;
+
+
+    for(var j=0; j<M;j++){
+        var x=xMin+j*xStep;
+        for (var i=0;i<N;i++){
+            var m=Math.random() < 0.5 ? -1 : 1
+
+            var m2=m* Math.random()
+            person=audience( Math.random()*10 * 0xffffff);
+            person.position.set(x+m,yMin+i*yStep, zMin+i*zStep)
+            groupPeople.add(person)
+            var tween= new TWEEN.Tween(person.position,t).to({y: "+1"},1000).delay(Math.random()*1000).repeat(Infinity).yoyo(true).start()
+        }
+    }
+    return groupPeople;
 }

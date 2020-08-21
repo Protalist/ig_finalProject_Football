@@ -11,7 +11,7 @@ import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoa
 
 import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
-import {streetLamp,people, portiere, ball, humanStructure,TextureAnimator} from '../src/Shape/shape.js'
+import {streetLamp,audience, multipleAudience,portiere, ball, humanStructure} from '../src/Shape/shape.js'
 import {changeCanvas} from "../src/Util/Util.js"
 
 
@@ -42,7 +42,9 @@ var canvas2 = document.getElementById('textureCanvas')
 var ctx = canvas2.getContext('2d');
 
 
+var HumanGroup = new TWEEN.Group()
 
+var audienceGroup= new TWEEN.Group() 
 
 //main object in the scene
 var renderer;
@@ -528,7 +530,7 @@ function detectCollisions() {
         if(index==1){
             console.log("GOAL");
             
-            if(!GOAL)point++;
+     
             GOAL=true;
         }
         else{
@@ -550,6 +552,7 @@ function detectCollisions() {
       }
     }
   }
+
 
   return GOAL;
 }
@@ -643,8 +646,19 @@ for(var i=0;i<3;i++){
     loadModel();
     loadModel2();
     loadPlane();
-    
-  
+
+
+
+{var ad =multipleAudience(6,6,-45,45,0,10,0,10,audienceGroup);
+    ad.translateZ(40)
+    ad.translateY(5)
+  scene.add(ad);}
+  {var ad =multipleAudience(6,6,-45,45,0,10,0,10,audienceGroup);
+    ad.translateZ(-40)
+    ad.translateY(5)
+    ad.rotateY(180*Math.PI/180)
+  scene.add(ad);}
+
     renderer = new THREE.WebGLRenderer();
     renderer.autoClearColor = false;
     renderer.shadowMap.enabled = true ;
@@ -700,6 +714,7 @@ function tweennala(balla,position,target,target2,pot,rot){
             if(collisions.length>0){
                 if(detectCollisions()){
                     goal=true
+
                 }
             }
              if(balla.position.x>=56.5 &&!notStartedSecondTween&&GOAL){
@@ -779,6 +794,10 @@ function tweennala(balla,position,target,target2,pot,rot){
                    function(){
                     notStarted=false;
                     console.log(goal)
+                    if(goal){
+                        point++
+                    }
+                    document.getElementById("power").value=0.0;
                    }
                )
             return tween1
@@ -886,6 +905,7 @@ function animate(time){
     texturePoint.needsUpdate = true;
     TWEEN.update(time);
     HumanGroup.update(time)
+    audienceGroup.update(time)
     controls.update();
     
    for (var g in gif){
@@ -910,27 +930,26 @@ document.onkeydown=function(e){
         renderer.shadowMap.enabled = !renderer.shadowMap.enabled;
     }
     else if (event.code == 'KeyK' && !notStarted) {
-        notStarted=true;
+  
         dir="rightLow";
     }
     else if (event.code == 'KeyI'&& !notStarted ) {
-        notStarted=true;
         dir="rightHigh";
      }
      else if (event.code == 'KeyU' && !notStarted) {
-        notStarted=true;
+  
         dir="centerHigh";
      }
      else if (event.code == 'KeyY'&& !notStarted ) {
-        notStarted=true;
+
         dir="leftHigh";
      }
      else if (event.code == 'KeyH' && !notStarted) {
-        notStarted=true;
+
         dir="leftLow";
      }
      else if (event.code == 'KeyJ' && !notStarted) {
-        notStarted=true;
+
         dir="centerLow";
      }
      else if (event.code == 'KeyE' && !notStarted) {
@@ -940,9 +959,8 @@ document.onkeydown=function(e){
         
      }
 
-     if(dir != "" && !kciking){
+     if(dir != ""){
         kciking=true
-        runAndKick(dir);
         powerShot(pressed_key);
         dir=""
      }
@@ -976,29 +994,67 @@ console.log(timeX)
 
 
 
+
+
+
 function powerShot(pressedKey){
-    var stop=false;
-    
-    window.setInterval(()=>{
-        if(!stop){
-            document.onkeyup=(a)=>{
-                
-                
-                if(a.code==pressedKey){
-                    stop=true;
-                }
-            };
             document.getElementById("power").value+=0.5;
-            if(pot.power>500)pot.power-=50;
-            
-            
-        }
-    },75/2)
-    
- 
-    
+            if(pot.power>500) pot.power-=50;
 }
 
+
+
+
+
+document.onkeyup=function(e){
+
+    var dir="c"
+        if(e.code== "Enter"){
+            console.log("spara")
+            if(!kciking){
+                kciking=true
+                runAndKick(dir);
+                dir=""
+             }
+         }
+
+    
+
+         if(e.keyCode==115){
+            renderer.shadowMap.enabled = !renderer.shadowMap.enabled;
+        }
+        else if (event.code == 'KeyK' && !notStarted) {
+      
+            dir="rightLow";
+            runAndKick(dir);
+        }
+        else if (event.code == 'KeyI'&& !notStarted ) {
+            dir="rightHigh";
+            runAndKick(dir);
+         }
+         else if (event.code == 'KeyU' && !notStarted) {
+      
+            dir="centerHigh";
+            runAndKick(dir);
+         }
+         else if (event.code == 'KeyY'&& !notStarted ) {
+    
+            dir="leftHigh";
+            runAndKick(dir);
+         }
+         else if (event.code == 'KeyH' && !notStarted) {
+    
+            dir="leftLow";
+            runAndKick(dir);
+         }
+         else if (event.code == 'KeyJ' && !notStarted) {
+    
+            dir="centerLow";
+            runAndKick(dir);
+         }
+}
+
+    
 function runAndKick(dir=""){
     var time=3000/4;
     var first=true;
@@ -1045,7 +1101,6 @@ function runAndKick(dir=""){
     
 }
 
-var HumanGroup = new TWEEN.Group()
 
 
 
