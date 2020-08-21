@@ -2,6 +2,7 @@
 import * as THREE from '../node_modules/three/build/three.module.js'
 import TWEEN from '../node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
+import {getRndInteger} from "../Util/Util.js"
 
 //dimension of the pivot
 const radius = 0.5;
@@ -331,7 +332,15 @@ export function audience(color=0xffffff){
     return sprite
 }
 
+
+
+
+
+
 export function multipleAudience(N,M,xMin,xMax,yMin,yMax,zMin,zMax,t){
+    var loader1 = new THREE.TextureLoader();
+    var ttxt1=loader1.load('../src/texture/audience_sprite.png');
+
     var X=xMax-xMin;
     var Y=yMax-yMin;
     var Z=zMax-zMin;
@@ -339,10 +348,24 @@ export function multipleAudience(N,M,xMin,xMax,yMin,yMax,zMin,zMax,t){
     var yStep=Y/N;
     var zStep=Z/N;
 
+
+
+
     var groupPeople=new THREE.Group();
 
     var person;
 
+
+
+    var colors=[
+        new THREE.SpriteMaterial(  {map: ttxt1,color: 0xffffff*Math.random() }),
+        new THREE.SpriteMaterial( {map: ttxt1,color: 0xffffff*Math.random() }),
+        new THREE.SpriteMaterial( {map: ttxt1,color: 0xffffff*Math.random() }),
+        new THREE.SpriteMaterial( {map: ttxt1, color: 0xffffff*Math.random() })
+    ]
+    
+
+    //var spriteMaterial = new THREE.SpriteMaterial( obj );
 
     for(var j=0; j<M;j++){
         var x=xMin+j*xStep;
@@ -350,8 +373,12 @@ export function multipleAudience(N,M,xMin,xMax,yMin,yMax,zMin,zMax,t){
             var m=Math.random() < 0.5 ? -1 : 1
 
             var m2=m* Math.random()
-            person=audience( Math.random()*10 * 0xffffff);
-            person.position.set(x+m,yMin+i*yStep, zMin+i*zStep)
+            //spriteMaterial.color.set(0xffffff*Math.random())
+  
+            person=new THREE.Sprite( colors[getRndInteger(0,4)]);
+
+            person.position.set(x+m2,yMin+i*yStep, zMin+i*zStep)
+            person.scale.set(5,5,5)
             groupPeople.add(person)
             var tween= new TWEEN.Tween(person.position,t).to({y: "+1"},1000).delay(Math.random()*1000).repeat(Infinity).yoyo(true).start()
         }

@@ -545,7 +545,13 @@ function detectCollisions() {
                                                             balla.position.y=pos.y;
                                                             balla.position.z=pos.z;
                                                             balla.rotation.x+=Math.random()})
-                                                            .easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out)).start();
+                                                            .easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out)).onComplete(
+                                                                ()=>{
+                                                                    notStarted=false;
+                                                                    document.getElementById("power").value=0.0;
+                                                                    balla.position.set(0,1,0)
+                                                                }
+                                                            ).start();
         }
  
         // Move the object in the clear. Detect the best direction to move.
@@ -798,6 +804,7 @@ function tweennala(balla,position,target,target2,pot,rot){
                         point++
                     }
                     document.getElementById("power").value=0.0;
+                    balla.position.set(0,1,0)
                    }
                )
             return tween1
@@ -1024,31 +1031,32 @@ document.onkeyup=function(e){
             renderer.shadowMap.enabled = !renderer.shadowMap.enabled;
         }
         else if (event.code == 'KeyK' && !notStarted) {
-      
+            notStarted=true
             dir="rightLow";
             runAndKick(dir);
         }
         else if (event.code == 'KeyI'&& !notStarted ) {
+            notStarted=true
             dir="rightHigh";
             runAndKick(dir);
          }
          else if (event.code == 'KeyU' && !notStarted) {
-      
+            notStarted=true
             dir="centerHigh";
             runAndKick(dir);
          }
          else if (event.code == 'KeyY'&& !notStarted ) {
-    
+            notStarted=true
             dir="leftHigh";
             runAndKick(dir);
          }
          else if (event.code == 'KeyH' && !notStarted) {
-    
+            notStarted=true
             dir="leftLow";
             runAndKick(dir);
          }
          else if (event.code == 'KeyJ' && !notStarted) {
-    
+            notStarted=true
             dir="centerLow";
             runAndKick(dir);
          }
