@@ -46,6 +46,10 @@ var HumanGroup = new TWEEN.Group()
 
 var audienceGroup= new TWEEN.Group() 
 
+var tween
+
+var tweenIdleHuman2,tweenIdleHuman1
+
 //main object in the scene
 var renderer;
 var scene,Bscene;
@@ -60,8 +64,6 @@ var lamp_a=[];
 
 //gif
 var gif=[];
-
-var tween
 
 
 
@@ -596,6 +598,20 @@ window.onload= function(){
     human.position.x=-15;
     human.rotation.y=Math.PI/2;
     scene.add(human);
+    tweenIdleHuman1=new TWEEN.Tween(human.children[4].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},3000).repeat(1).yoyo(true).easing(TWEEN.Easing.Bounce.In).onStop(
+        (obj) =>{
+            obj.x=0
+        }
+    )
+    tweenIdleHuman2=new TWEEN.Tween(human.children[5].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},3000).repeat(1).yoyo(true).easing(TWEEN.Easing.Bounce.In).onStop(
+        (obj) =>{
+            obj.x=0
+        }
+    )
+    tweenIdleHuman1.chain(tweenIdleHuman2)
+    tweenIdleHuman2.chain(tweenIdleHuman1)
+    tweenIdleHuman1.start()
+   
     balla = ball(1,32);
     balla.position.y=1;
 
@@ -1064,8 +1080,11 @@ document.onkeyup=function(e){
 
     
 function runAndKick(dir=""){
+    tweenIdleHuman1.stop()
+    tweenIdleHuman2.stop()
     var time=3000/4;
     var first=true;
+    
     var tweenBody= new TWEEN.Tween(human.position,HumanGroup).to({x:"+3.4"},time).repeat(3).yoyo(false).start()
     var tweenLowerLeg1= new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: [-45*Math.PI/180,45*Math.PI/180]},time).repeat(3).yoyo(true).start()
     var tweenLowerLeg2= new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x:  [45*Math.PI/180,-45*Math.PI/180]},time).repeat(3).yoyo(true)
@@ -1083,7 +1102,10 @@ function runAndKick(dir=""){
     var runback1_2= new TWEEN.Tween(human.children[4].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},time/2).repeat(3).yoyo(true)
     var runback_2= new TWEEN.Tween(human.children[5].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},time/2).repeat(1).yoyo(true)
     var runback1=new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(1).yoyo(true).onStart(()=>{runback_2.start()}).onRepeat(()=>{runback_2.start()})
-    var runback=new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(3).yoyo(true).onRepeat((obj)=>{runback1.start()}).onStart(()=>{runback1_2.start(); tweenBodyN.start()}).onComplete(()=>{kciking=false})
+    var runback=new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(3).yoyo(true).onRepeat((obj)=>{runback1.start()}).onStart(()=>{runback1_2.start(); tweenBodyN.start()}).onComplete(()=>{
+        kciking=false;
+        tweenIdleHuman1.start();
+    })
 
    
         
