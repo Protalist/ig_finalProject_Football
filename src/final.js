@@ -29,7 +29,7 @@ var pressed_key;
 var tween1,tween2;
 var notStartedSecondTween=false;
 var notStarted = false;
-var increment=0;
+
 
 //Airplane
 var aereoStartPosition ={x:110,y:70,z:-200}
@@ -737,9 +737,8 @@ function tweennala(balla,position,target,target2,pot,rot){
                 balla.rotation.z -=0.05+Math.random()*0.1;  
             }
             calculateCollisionPoints(balla,"collision",0);
-            if(collisions.length>0 && (increment++)%10==0){
-                detectCollisions();
-                    //goal=true
+            if(collisions.length>0 ){
+                if(detectCollisions())goal=true;
 
                 
             }
@@ -1148,7 +1147,7 @@ function newShot(){
     balla.position.set(0,1,0);
     document.getElementById("power").value=0.0;
     pot={power:1000+500};
-    increment=0;
+    
 }
 
 
