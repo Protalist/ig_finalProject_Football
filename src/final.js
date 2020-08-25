@@ -20,6 +20,7 @@ var clock = new THREE.Clock();
 var errorSwitch=false,errorForShot=false;
 var errorProb= 0.35;
 var GOAL=false;
+var MISS = false;
 var point=0;
 var pot={power:1000+500};
 var collisions=[];
@@ -532,6 +533,7 @@ function detectCollisions() {
  
 
         if(index==1){
+            if(MISS)return;
             console.log("GOAL");
             
      
@@ -539,6 +541,7 @@ function detectCollisions() {
         }
         else{
             if(GOAL)return;
+            MISS=true;
             console.log("MISS");
             point=0
             tween1.stop();
@@ -739,7 +742,7 @@ function tweennala(balla,position,target,target2,pot,rot){
 
                 }
             }
-             if(balla.position.x>=56.5 &&!notStartedSecondTween&&GOAL){
+             if(balla.position.x>=56.5 &&!notStartedSecondTween&&GOAL&&!MISS){
                  notStartedSecondTween=true;
                  tween2 =new TWEEN.Tween(balla.position).to(target2, 1500).onUpdate(()=>{
                      balla.rotation.y +=0.05+Math.random()*0.1;  
@@ -818,7 +821,7 @@ function tweennala(balla,position,target,target2,pot,rot){
                tween1.onComplete(
                    function(){
                    
-                    if(goal){
+                    if(GOAL){
                         point++
                     }
                    //newShot();
@@ -1139,6 +1142,7 @@ function newShot(){
     notStartedSecondTween=false;
     GOAL=false;
     notStarted=false;
+    MISS=false;
     balla.position.set(0,1,0);
     document.getElementById("power").value=0.0;
     pot={power:1000+500};
