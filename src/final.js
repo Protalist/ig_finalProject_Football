@@ -1141,6 +1141,7 @@ function newShot(){
     notStarted=false;
     balla.position.set(0,1,0);
     document.getElementById("power").value=0.0;
+    pot={power:1000+500};
 }
 
 
