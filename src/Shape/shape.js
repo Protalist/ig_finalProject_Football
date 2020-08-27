@@ -249,6 +249,8 @@ shape.lineTo(x,y)
 
 
 
+var port = new THREE.Group();
+port.name="PORTIERE"
 var shape2= new THREE.Shape();
 
 shape2.moveTo(0,heigh+radius+radius2/2)
@@ -260,7 +262,10 @@ var g=new THREE.ShapeBufferGeometry(shape, curveSegments);
 var m = new THREE.MeshPhongMaterial({ color: 0x8B8381 ,side: THREE.DoubleSide} );
 
 var g2=new THREE.ShapeBufferGeometry(shape2, curveSegments);
+
 var r= new THREE.Mesh(g,m);
+
+r.name="Portiere"
 r.add(new THREE.Mesh(g2,m))
 return r;
 }
@@ -311,6 +316,7 @@ const material = new THREE.MeshPhongMaterial();
 const mesh = new THREE.Mesh(geometry, material);
 material.map = new THREE.TextureLoader().load('../src/texture/ballTex.jpg');
 mesh.castShadow=true
+mesh.name="palla"
 return mesh;
 
 }
@@ -358,10 +364,10 @@ export function multipleAudience(N,M,xMin,xMax,yMin,yMax,zMin,zMax,t){
 
 
     var colors=[
-        new THREE.SpriteMaterial(  {map: ttxt1,color: 0xffffff*Math.random() }),
-        new THREE.SpriteMaterial( {map: ttxt1,color: 0xffffff*Math.random() }),
-        new THREE.SpriteMaterial( {map: ttxt1,color: 0xffffff*Math.random() }),
-        new THREE.SpriteMaterial( {map: ttxt1, color: 0xffffff*Math.random() })
+        new THREE.SpriteMaterial(  {map: ttxt1,color: 0xD0EF0C }),
+        new THREE.SpriteMaterial( {map: ttxt1,color: 0x0CEF7A }),
+        new THREE.SpriteMaterial( {map: ttxt1,color: 0xE50CEF }),
+        new THREE.SpriteMaterial( {map: ttxt1, color: 0x0CD3EF })
     ]
     
 
@@ -384,4 +390,22 @@ export function multipleAudience(N,M,xMin,xMax,yMin,yMax,zMin,zMax,t){
         }
     }
     return groupPeople;
+}
+
+
+
+export function curveLine(a,b,c){
+    var curve = new THREE.QuadraticBezierCurve3(
+ a,b,c
+    );
+    
+    var points = curve.getPoints( 50 );
+    var geometry = new THREE.BufferGeometry().setFromPoints( points );
+    
+    var material = new THREE.LineBasicMaterial( { color : 0xff0000 } );
+    
+    // Create the final object to add to the scene
+    var curveObject = new THREE.Line( geometry, material );
+
+    return curveObject;
 }

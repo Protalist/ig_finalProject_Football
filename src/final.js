@@ -11,7 +11,7 @@ import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoa
 
 import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
-import {streetLamp,audience, multipleAudience,portiere, ball, humanStructure} from '../src/Shape/shape.js'
+import {streetLamp,audience, multipleAudience,portiere, ball, humanStructure,curveLine} from '../src/Shape/shape.js'
 import {changeCanvas} from "../src/Util/Util.js"
 
 
@@ -28,6 +28,12 @@ var pressed_key;
 var tween1,tween2;
 var notStartedSecondTween=false;
 var notStarted = false;
+var curve
+var boxBall = new THREE.Box3();
+var boxGoal = new THREE.Box3();
+var boxPort= new THREE.Box3();
+
+var port
 
 //Airplane
 var aereoStartPosition ={x:110,y:70,z:-200}
@@ -52,6 +58,7 @@ var tween,tween3;
 
 var tweenIdleHuman2,tweenIdleHuman1
 
+var tabellone;
 //main object in the scene
 var renderer;
 var scene,Bscene;
@@ -171,7 +178,7 @@ function fondoCampo(){
 
 function specchio(){
     
-    const planeGeo = new THREE.PlaneBufferGeometry(55,16);
+    const planeGeo = new THREE.PlaneBufferGeometry(55,16,32,32);
     const planeMat = new THREE.MeshPhongMaterial({
         color: 0xFF0000,
     side: THREE.DoubleSide,
@@ -183,6 +190,11 @@ function specchio(){
     mesh.position.set(52.5,9,0);
     mesh.rotation.y = Math.PI/2;
     return mesh;
+}
+
+function planeSpecchio(){
+
+    return new THREE.Plane(new THREE.Vector3( 1, 0, 0 ),-9)
 }
 
 function fuorisx(){
@@ -493,7 +505,7 @@ function loadModel2(){
                     }
 
                     if(child.name=="Box016"){
-                        
+                        tabellone= child
                         child.material.map=texturePoint;
                     }
             child.material.needsUpdate = true;
@@ -540,20 +552,6 @@ function detectCollisions() {
         else{
             if(GOAL)return;
             console.log("MISS");
-            point=0
-            tween1.stop();
-            var pos = {x:collisions[0].xMax-0.5,y:collisions[0].yMax-0.5,z:collisions[0].zMax-0.5};
-            var tar = {x:pos.x - (5+Math.random()*10),y:1,z:pos.z-Math.random()*2.5+Math.random()*2.5};
-            
-            new TWEEN.Tween(pos).to(tar, 2000).onUpdate(()=>{balla.position.x=pos.x;
-                                                            balla.position.y=pos.y;
-                                                            balla.position.z=pos.z;
-                                                            balla.rotation.x+=Math.random()})
-                                                            .easing(createNoisyEasing(0.1,TWEEN.Easing.Bounce.Out)).onComplete(
-                                                                ()=>{
-                                                                   newShot();
-                                                                }
-                                                            ).start();
         }
  
         // Move the object in the clear. Detect the best direction to move.
@@ -586,8 +584,13 @@ window.onload= function(){
     fondoCampo();
     
     goal = specchio();
+    boxGoal.setFromObject(goal)
+    // // var planeGoal=planeSpecchio();
+    // planeGoal.applyMatrix4( goal.matrixWorld );
     
-  
+    var helperG = new THREE.Box3Helper( boxGoal, 0xD0EF0C );
+    scene.add( helperG );
+
     scene.add(camera);
     fuoriDx=fuoridx();
     fuoriSx=fuorisx();
@@ -615,14 +618,34 @@ window.onload= function(){
     balla = ball(1,32);
     balla.position.y=1;
 
+
+    balla.geometry.computeBoundingBox();
+
+
+    boxBall.copy( balla.geometry.boundingBox ).applyMatrix4( balla.matrixWorld );
+
+    var helper = new THREE.Box3Helper( boxBall, 0xffff00 );
+    scene.add( helper );
+
     scene.add(balla);
-    console.log(balla.position.z)
-    var port=portiere();
+
+     port=portiere();
     port.translateX(planeA/2-10)
     port.translateZ(-20)
     port.rotateY(90*Math.PI/180)
 
+    port.geometry.computeBoundingBox();
+
+
+    boxPort.copy( port.geometry.boundingBox ).applyMatrix4( port.matrixWorld );
+boxPort.max.y+=10
+    var helperP = new THREE.Box3Helper( boxPort, 0xffff00 );
+    scene.add( helperP );
+
     scene.add(port)
+
+
+
     calculateCollisionPoints(balla,"collision",0);
     calculateCollisionPoints(goal,"collision",1);
     calculateCollisionPoints(port,"collision",2);
@@ -638,7 +661,12 @@ window.onload= function(){
     }
 
 
-    
+    {
+        curve=curveLine(a,b,c);
+        scene.add(curve);
+        console.log(a)
+        console.log(curve)
+    }
     
      tween= new TWEEN.Tween(port.position).to({z:"+40"},3000).repeat(Infinity).yoyo(true).onUpdate(()=>{
         calculateCollisionPoints(port,"collision",2);
@@ -705,6 +733,7 @@ for(var i=0;i<3;i++){
         RIGHT: 68, // d 
         BOTTOM: 83 // s 
     }
+    controls.enableKeys = false
 
     controls.target=human.position
     
@@ -912,9 +941,22 @@ function ShotBall(balla,dir){
 }
 
 
+function resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      renderer.setSize(width, height, false);
+    }
+    return needResize;
+  }
+
+
 function animate(time){
     changeCanvas(ctx,canvas2,point)
     if (resizeRendererToDisplaySize(renderer)) {
+        // document.getElementById("textureCanvas");
         const canvas = renderer.domElement;
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
         camera.updateProjectionMatrix();
@@ -925,7 +967,8 @@ function animate(time){
     var delta = clock.getDelta(); 
     requestAnimationFrame( animate );
  
-    
+    boxBall.copy( balla.geometry.boundingBox ).applyMatrix4( balla.matrixWorld );
+    boxPort.copy( port.geometry.boundingBox ).applyMatrix4( port.matrixWorld );
     texturePoint.needsUpdate = true;
     TWEEN.update(time);
     HumanGroup.update(time)
@@ -938,13 +981,17 @@ function animate(time){
 	renderer.render( scene, camera );
 }
 
-var kciking=false;
-
-var d = new Date();
 
 var timeZ=0;
-var timeY=0;
-var timeX=0;
+var timeY=2;
+var timeX=56;
+
+var endZ=0;
+var endY=1;
+
+var a=new THREE.Vector3( 0, 1, 0 );
+var b=new THREE.Vector3( 30, 2, 0 );
+var c=new THREE.Vector3( 56, 2, 0 );
 
 document.onkeydown=function(e){
 
@@ -984,7 +1031,7 @@ document.onkeydown=function(e){
      }
 
      if(dir != ""){
-        kciking=true
+    
         powerShot(pressed_key);
         dir=""
      }
@@ -992,26 +1039,71 @@ document.onkeydown=function(e){
 
      if(event.code== "ArrowLeft"){
         timeZ-=1;
+        b.z-=1
+
      }
      if(event.code== "ArrowRight"){
         timeZ+=1;
+        b.z+=1
+
      }
 
      if(event.code== "ArrowUp"){
         timeY+=1;
+        b.y+=1
      }
 
      if(event.code== "ArrowDown"){
-         if(timeY>=0){
+         if(timeY>=1){
             timeY-=1;
+         }
+
+         if(b.y>=1){
+            b.y-=1
          }
 
      }
 
+     if(event.code=="KeyD"){
+        endZ+=1;
+        timeZ+=0.5;
+        c.z+=1
+        b.z+=0.5
+     }
+
+     if(event.code=="KeyA"){
+        endZ-=1;
+        timeZ-=0.5;
+        c.z-=1
+        b.z-=0.5
+     }
+
+     if(event.code=="KeyW"){
+        endY+=1;
+        c.y+=1
+        b.y+=0.5
+     }
+
+     if(event.code=="KeyS"){
+        endY-=1;
+        c.y-=1
+        b.y-=0.5
+     }
 
      if(event.code== "Enter"){
+        powerShot(pressed_key);
         timeX+=1;
+        b.x+=0.5;
+        c.x+=1;
      }
+
+     var curveg = new THREE.QuadraticBezierCurve3(
+        a,b,c
+           );
+           
+           var points = curveg.getPoints( 50 );
+           var geometry = new THREE.BufferGeometry().setFromPoints( points );
+curve.geometry=geometry
 console.log(timeX)
 }
 
@@ -1021,7 +1113,7 @@ console.log(timeX)
 
 
 
-function powerShot(pressedKey){
+function powerShot(){
             document.getElementById("power").value+=0.5;
             if(pot.power>500) pot.power-=50;
 }
@@ -1032,14 +1124,14 @@ function powerShot(pressedKey){
 
 document.onkeyup=function(e){
 
-    var dir="c"
-        if(e.code== "Enter"){
+    var dir=""
+        if(e.code== "Enter" && !notStarted){
             console.log("spara")
-            if(!kciking){
-                kciking=true
-                runAndKick(dir);
-                dir=""
-             }
+
+            notStarted=true
+                runAndKick("");
+
+
          }
 
     
@@ -1105,8 +1197,8 @@ function runAndKick(dir=""){
     var runback_2= new TWEEN.Tween(human.children[5].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},time/2).repeat(1).yoyo(true)
     var runback1=new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(1).yoyo(true).onStart(()=>{runback_2.start()}).onRepeat(()=>{runback_2.start()})
     var runback=new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(3).yoyo(true).onRepeat((obj)=>{runback1.start()}).onStart(()=>{runback1_2.start(); tweenBodyN.start()}).onComplete(()=>{
-        kciking=false;
         tweenIdleHuman1.start();
+
     })
 
    
@@ -1124,16 +1216,159 @@ function runAndKick(dir=""){
     tweenArm1.start()
     tweenArm2.start()
     tweenLowerLeg2.start()
-    setTimeout(()=>{
         if(dir!=""){
             var t=ShotBall(balla,dir);
             tweenLowerLeg2.chain(t)
         }
-    },740);
+    else{
+        var t=spara(balla)
+        tweenLowerLeg2.chain(t)
+    }
     
 }
 
 
+
+
+
+function tweenAereo(){
+    aereoGoal = scene.getObjectByName("Aereo");
+    var startP = aereoGoal.position; var tarP = {z:600};
+    aereoGoal.traverse(
+       function (c){
+           if (c instanceof THREE.Mesh) {
+               c.material.transparent =true;
+               c.material.opacity = 1.0;
+               
+           }
+       }
+   );
+    var tweenplane = new TWEEN.Tween(startP).to({z:400},7000).onUpdate((obj)=>{
+        controls.target=obj;
+        aereoGoal.position.z = startP.z; 
+        eli.rotation.z+=20.
+        if(aereoGoal.position.z>=200){
+           aereoGoal.traverse(
+               function (c){
+                   if (c instanceof THREE.Mesh) {
+                       c.material.transparent =true;
+                       c.material.opacity -= 0.05;
+                       
+                   }
+               }
+           );
+        }
+    }).onComplete(()=>{
+        controls.target=human.position;
+        aereoGoal.position.set(aereoStartPosition.x,aereoStartPosition.y,aereoStartPosition.z);
+
+    }).start();
+    return tweenplane
+}
+
+var goalX,goalY,goalZ,goalRotation;
+function spara(balla){
+    console.log(timeZ)
+    goalX = new TWEEN.Tween(balla.position).to({x:[0,b.x,c.x]},1000).onStart(
+        () =>{
+            goalY= new TWEEN.Tween(balla.position).to({y:[1,b.y,c.y]},1000).interpolation(TWEEN.Interpolation.Bezier).start()
+            goalZ= new TWEEN.Tween(balla.position).to({z:[0,b.z,c.z]},1000).interpolation(TWEEN.Interpolation.Bezier).start()
+            goalRotation= new TWEEN.Tween(balla.rotation).to({x: "+"+timeX/2,y:"+"+timeY/2},1000).repeat(10).start()
+        }
+    ).interpolation(TWEEN.Interpolation.Bezier)
+    .onComplete(
+        () => {
+            console.log("not enogh")
+            point=0;
+            goalX.stop()
+            goalZ.stop()
+            goalY.stop()
+            goalRotation.stop()
+            new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
+                obj.camera.target=tabellone.position;
+                //camera.position.set(tabellone.position.x,30,-20);
+            
+                point="NOOOOOOOOOO!!!!!!!"
+            }).onComplete((obj)=>{
+                obj.camera.target=human.position;
+                point=0
+            }).start()
+            newShot()
+        }
+    ).onUpdate(
+        (obj)=>{
+            var goal=0
+            if(boxBall.intersectsBox(boxGoal)){
+                console.log("Goal")
+                goal=1
+            }
+             if(boxBall.intersectsBox(boxPort)){
+                console.log("No Goal")
+                goal=2
+            }
+             if(obj.x>60 && goal==0){
+                console.log("out")
+                point=0;
+                goalX.stop()
+                goalZ.stop()
+                goalY.stop()
+                goalRotation.stop()
+                new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
+                    obj.camera.target=tabellone.position;
+                    //camera.position.set(tabellone.position.x,30,-20);
+                
+                    point="OUUUUTTT!!!!!"
+                }).onComplete((obj)=>{
+                    obj.camera.target=human.position;
+                    point=0
+                }).start()
+                new TWEEN.Tween(balla.position).to({x:"-10"},1000).start()
+                new TWEEN.Tween(balla.position).to({y:"-"+(balla.position.y-1)},2000).onComplete(()=>{
+                    newShot()
+                }).easing(TWEEN.Easing.Bounce.Out).start()
+            }
+
+            if (goal==1){
+                point++;
+                goalX.stop()
+                goalZ.stop()
+                goalY.stop()
+                goalRotation.stop()
+                tweenAereo().start();
+                new TWEEN.Tween(balla.position).to({x:"+7"},1000).start()
+                new TWEEN.Tween(balla.position).to({y:"-"+(balla.position.y-1)},2000).onComplete(()=>{
+                    newShot()
+                }).easing(TWEEN.Easing.Bounce.Out).start()
+
+            }
+
+            if (goal == 2){
+                point=0;
+                goalX.stop()
+                goalZ.stop()
+                goalY.stop()
+                goalRotation.stop()
+                new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
+                    obj.camera.target=tabellone.position;
+                    //camera.position.set(tabellone.position.x,30,-20);
+                
+                    point="PARATA!!!!!!!"
+                }).onComplete((obj)=>{
+                    obj.camera.target=human.position;
+                    point=0
+                }).start()
+                new TWEEN.Tween(balla.position).to({x:"-10"},1000).start()
+                new TWEEN.Tween(balla.position).to({y:"-"+(balla.position.y-1)},2000).onComplete(()=>{
+                    newShot()
+                }).easing(TWEEN.Easing.Bounce.Out).start()
+            }
+
+            
+            }
+
+    )
+    return goalX;
+}
 
 function newShot(){
     notStartedSecondTween=false;
@@ -1142,16 +1377,22 @@ function newShot(){
     balla.position.set(0,1,0);
     document.getElementById("power").value=0.0;
     pot={power:1000+500};
+    timeX=50;
+    timeY=1;
+    timeZ=0;
+    b.x=25;
+    b.y=1;
+    b.z=0;
+    c.x=50;
+    c.y=1;
+    c.z=0;
+    var curveg = new THREE.QuadraticBezierCurve3(
+        a,b,c
+           );
+           
+           var points = curveg.getPoints( 50 );
+           var geometry = new THREE.BufferGeometry().setFromPoints( points );
+curve.geometry=geometry
 }
 
 
-function resizeRendererToDisplaySize(renderer) {
-    const canvas = renderer.domElement;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    const needResize = canvas.width !== width || canvas.height !== height;
-    if (needResize) {
-      renderer.setSize(width, height, false);
-    }
-    return needResize;
-  }
