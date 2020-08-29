@@ -50,6 +50,19 @@
     padding: 20px;
     text-align: center;
   }
+
+  .keyboard {
+	border: .1em solid #aaa;
+	border-radius: 15%;
+	display: inline-block;
+	padding: .1em .5em;
+	background: linear-gradient(#ddd, #fff 20% 80%, #ddd) 0 100%/ 1% 125%;
+	user-select: none;
+	color: #000;
+	font-weight: bold;
+	transition: background-position .3s
+}
+
     </style>
 </head>
 
@@ -59,7 +72,16 @@
 
 <div class="bg-text">
   <h1>Football game</h1>
-  <p>try to make the high number of goal</p>
+  <p>Try to make the high number of goal!!!!!!!!!!!!</p>
+  <p>Use <span class="keyboard">	&#8592;</span>, <span class="keyboard">&#8594;	</span>, <span class="keyboard">	&#8593;	</span> or <span class="keyboard">&#8595;	</span> to give the effect to the ball. </p>
+  <p>Use <span class="keyboard">	W</span>, <span class="keyboard">A	</span>, <span class="keyboard">	S	</span> or <span class="keyboard"> D	</span> to give the angle to the kick. </p>
+  <p>Press  and hold enter <span class="keyboard">	&#8617;</span> to give the power to the kick </p>
+
+  <p><div class="divider"></div></p>
+  <p>Press and hold  <span class="keyboard">K</span> right low, <span class="keyboard">I</span> right high, <span class="keyboard">U</span> center high,
+    <span class="keyboard">Y</span> left high,  <span class="keyboard">H</span> left low or <span class="keyboard">J</span> center low to make a rapid kick.
+  </p>
+
   <form action="../src/final.html" > 
     <button class="btn waves-effect waves-light" type="submit" name="action">
         <i class="icon-sports_soccer-24px " > PLAY</i> 
