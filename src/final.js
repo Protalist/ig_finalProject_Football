@@ -11,8 +11,8 @@ import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoa
 
 import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
-import {streetLamp,audience, multipleAudience,portiere, ball, humanStructure,curveLine} from '../src/Shape/shape.js'
-import {changeCanvas} from "../src/Util/Util.js"
+import {streetLamp, multipleAudience,portiere, ball, humanStructure,curveLine} from '../src/Shape/shape.js'
+import {changeCanvas,checkINdex,visualPower} from "../src/Util/Util.js"
 
 
 var clock = new THREE.Clock();
@@ -35,6 +35,9 @@ var boxPort= new THREE.Box3();
 
 var port
 
+
+
+var percentagModel=[false,false,false]
 //Airplane
 var aereoStartPosition ={x:110,y:70,z:-200}
 
@@ -276,6 +279,7 @@ const mats = [new THREE.MeshPhongMaterial({color: 0xFF0000,
         side: THREE.DoubleSide}),new THREE.MeshPhongMaterial({color: 0xFF0000,
             side: THREE.DoubleSide}),new THREE.MeshPhongMaterial({color: 0x0000FF,
                 side: THREE.DoubleSide}),]
+
 function loadPlane(){
     var loaderPlane = new OBJLoader();
     loaderPlane.load(
@@ -322,6 +326,7 @@ function loadPlane(){
                     }
                 }
             );
+            percentagModel[0]=true
             scene.add(object);
             
             
@@ -449,7 +454,7 @@ function loadModel(){
         object.rotateX(-90*Math.PI/180)
         object.rotateZ(-180*Math.PI/180)
         object.scale.set(0.1,0.2,0.09)
-
+        percentagModel[1]=true
         scene.add( object );
 
     } );
@@ -521,6 +526,7 @@ function loadModel2(){
         // object.rotateZ(-180*Math.PI/180)
         object.scale.set(0.5,0.5,0.5)
 
+        percentagModel[2]=true
         scene.add( object );
         
 
@@ -570,7 +576,7 @@ window.onload= function(){
 // b <3 g :)
     scene = new THREE.Scene();
     //scene.fog=new THREE.Fog( 'skyblue' , 1, 2);
-    background()
+  
     camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
     camera.position.set(-60,30,-13)
     scene.background = new THREE.Color( 'skyblue' );
@@ -646,12 +652,7 @@ boxPort.max.y+=10
 
 
 
-    calculateCollisionPoints(balla,"collision",0);
-    calculateCollisionPoints(goal,"collision",1);
-    calculateCollisionPoints(port,"collision",2);
-    calculateCollisionPoints(fuoriUp,"collision",3);
-     calculateCollisionPoints(fuoriDx,"collision",4);
-     calculateCollisionPoints(fuoriSx,"collision",5);
+
     
     
     {var color = 0x89846c;
@@ -709,39 +710,14 @@ for(var i=0;i<3;i++){
     ad.rotateY(180*Math.PI/180)
   scene.add(ad);}
 
-    renderer = new THREE.WebGLRenderer();
-    renderer.autoClearColor = false;
-    renderer.shadowMap.enabled = true ;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer = new THREE.WebGLRenderer();
 
-    renderer.setSize( window.innerWidth, window.innerHeight );
+  background();
 
-    renderer.setPixelRatio( window.devicePixelRatio );
-
-    // add the automatically created <canvas> element to the page
-    document.body.appendChild( renderer.domElement );
-
-    // render, or 'create a still image', of the scene
-
-    renderer.render( scene, camera );
-    
-    controls = new OrbitControls(camera,renderer.domElement);
-
-    controls.keys = {
-        LEFT: 65, //a
-        UP: 87, // w
-        RIGHT: 68, // d 
-        BOTTOM: 83 // s 
-    }
-    controls.enableKeys = false
-
-    controls.target=human.position
-    
-    controls.update();
-    console.log(airparts);
-    animate(0.00);
+  animateWaiting(0.0)
  
 }
+
 
 
 function tweennala(balla,position,target,target2,pot,rot){
@@ -953,7 +929,45 @@ function resizeRendererToDisplaySize(renderer) {
   }
 
 
+function animateWaiting(time){
+    if(checkINdex(percentagModel)){
+
+        setTimeout(function() { document.getElementById("gl-canvas").remove(); visualPower(); }, 4000);
+        renderer.autoClearColor = false;
+        renderer.shadowMap.enabled = true ;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+        renderer.setSize( window.innerWidth, window.innerHeight );
+    
+        renderer.setPixelRatio( window.devicePixelRatio );
+    
+        // add the automatically created <canvas> element to the page
+        document.body.appendChild( renderer.domElement );
+    
+        // render, or 'create a still image', of the scene
+    
+        renderer.render( scene, camera );
+        controls = new OrbitControls(camera,renderer.domElement);
+    
+        controls.keys = {
+            LEFT: 65, //a
+            UP: 87, // w
+            RIGHT: 68, // d 
+            BOTTOM: 83 // s 
+        }
+        controls.enableKeys = false
+    
+        controls.target=human.position
+        
+        controls.update();
+
+        animate(0.00);
+    }else{
+        requestAnimationFrame(animateWaiting)
+    }
+}
 function animate(time){
+
     changeCanvas(ctx,canvas2,point)
     if (resizeRendererToDisplaySize(renderer)) {
         // document.getElementById("textureCanvas");
@@ -965,7 +979,6 @@ function animate(time){
 
       
     var delta = clock.getDelta(); 
-    requestAnimationFrame( animate );
  
     boxBall.copy( balla.geometry.boundingBox ).applyMatrix4( balla.matrixWorld );
     boxPort.copy( port.geometry.boundingBox ).applyMatrix4( port.matrixWorld );
@@ -978,7 +991,10 @@ function animate(time){
    for (var g in gif){
        gif[g].update(1000*delta);
    }
-	renderer.render( scene, camera );
+    renderer.render( scene, camera );
+
+
+    requestAnimationFrame( animate );
 }
 
 
@@ -1278,22 +1294,24 @@ function spara(balla){
     ).interpolation(TWEEN.Interpolation.Bezier)
     .onComplete(
         () => {
-            console.log("not enogh")
-            point=0;
-            goalX.stop()
-            goalZ.stop()
-            goalY.stop()
-            goalRotation.stop()
-            new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
-                obj.camera.target=tabellone.position;
-                //camera.position.set(tabellone.position.x,30,-20);
+            // goalX.stop()
+            // goalZ.stop()
+            // goalY.stop()
+            // goalRotation.stop()
+
+            // console.log("not enogh")
+            // point=0;
+
+            // new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
+            //     obj.camera.target=tabellone.position;
+            //     //camera.position.set(tabellone.position.x,30,-20);
             
-                point="NOOOOOOOOOO!!!!!!!"
-            }).onComplete((obj)=>{
-                obj.camera.target=human.position;
-                point=0
-            }).start()
-            newShot()
+            //     point="NOOOOOOOOOO!!!!!!!"
+            // }).onComplete((obj)=>{
+            //     obj.camera.target=human.position;
+            //     point=0
+            // }).start()
+            // newShot()
         }
     ).onUpdate(
         (obj)=>{
@@ -1306,34 +1324,16 @@ function spara(balla){
                 console.log("No Goal")
                 goal=2
             }
-             if(obj.x>60 && goal==0){
-                console.log("out")
-                point=0;
-                goalX.stop()
-                goalZ.stop()
-                goalY.stop()
-                goalRotation.stop()
-                new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
-                    obj.camera.target=tabellone.position;
-                    //camera.position.set(tabellone.position.x,30,-20);
-                
-                    point="OUUUUTTT!!!!!"
-                }).onComplete((obj)=>{
-                    obj.camera.target=human.position;
-                    point=0
-                }).start()
-                new TWEEN.Tween(balla.position).to({x:"-10"},1000).start()
-                new TWEEN.Tween(balla.position).to({y:"-"+(balla.position.y-1)},2000).onComplete(()=>{
-                    newShot()
-                }).easing(TWEEN.Easing.Bounce.Out).start()
-            }
+            
 
             if (goal==1){
-                point++;
                 goalX.stop()
                 goalZ.stop()
                 goalY.stop()
                 goalRotation.stop()
+
+                point++;
+
                 tweenAereo().start();
                 new TWEEN.Tween(balla.position).to({x:"+7"},1000).start()
                 new TWEEN.Tween(balla.position).to({y:"-"+(balla.position.y-1)},2000).onComplete(()=>{
@@ -1343,11 +1343,13 @@ function spara(balla){
             }
 
             if (goal == 2){
-                point=0;
                 goalX.stop()
                 goalZ.stop()
                 goalY.stop()
                 goalRotation.stop()
+
+                point=0;
+
                 new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
                     obj.camera.target=tabellone.position;
                     //camera.position.set(tabellone.position.x,30,-20);
@@ -1363,6 +1365,29 @@ function spara(balla){
                 }).easing(TWEEN.Easing.Bounce.Out).start()
             }
 
+            if(obj.x>65 && goal==0){
+                goalX.stop()
+                goalZ.stop()
+                goalY.stop()
+                goalRotation.stop()
+
+                console.log("out")
+                point=0;
+
+                new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
+                    obj.camera.target=tabellone.position;
+                    //camera.position.set(tabellone.position.x,30,-20);
+                
+                    point="OUUUUTTT!!!!!"
+                }).onComplete((obj)=>{
+                    obj.camera.target=human.position;
+                    point=0
+                }).start()
+                new TWEEN.Tween(balla.position).to({x:"-10"},1000).start()
+                new TWEEN.Tween(balla.position).to({y:"-"+(balla.position.y-1)},2000).onComplete(()=>{
+                    newShot()
+                }).easing(TWEEN.Easing.Bounce.Out).start()
+            }
             
             }
 
@@ -1383,7 +1408,7 @@ function newShot(){
     b.x=25;
     b.y=1;
     b.z=0;
-    c.x=50;
+    c.x=60;
     c.y=1;
     c.z=0;
     var curveg = new THREE.QuadraticBezierCurve3(
