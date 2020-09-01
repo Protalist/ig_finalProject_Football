@@ -2,6 +2,10 @@
 <html>
 
 <head>
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+	<link rel="stylesheet" type="text/css" href="../src/node_modules/materialize-css/dist/css/materialize.min.css">
+    <script type="text/javascript" src="../src/node_modules/materialize-css/dist/js/materialize.min.js"></script>
 <style>
     #power{
     
@@ -20,7 +24,7 @@
 	transform: rotate(-90deg) translateX(-100%); 
 	margin-left: 1%;
   margin-top:50px ;
-  position:absolute;
+  position: fixed; top: 0px ; left: 0px;
   
 }
 #power::-webkit-progress-bar {
@@ -38,26 +42,115 @@
 	border-radius: 6px;
 	background: linear-gradient(90deg, rgb(43, 255, 0),#f00);
 }
+
+.wordWrap {
+    word-wrap: break-word;      /* IE 5.5-7 */
+    white-space: -moz-pre-wrap; /* Firefox 1.0-2.0 */
+    white-space: pre-wrap;      /* current browsers */
+}
+
+.div {
+    width: 10%;
+	height: 100%;
+	background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0, 0.4); /* Black w/opacity/see-through */
+    backdrop-filter: blur(8px);
+    color: white;
+    font-weight: bold;
+    border: 3px solid #f1f1f1;
+}
+
+.bg-text {
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0, 0.4); /* Black w/opacity/see-through */
+    backdrop-filter: blur(8px);
+    color: white;
+    font-weight: bold;
+    border: 3px solid #f1f1f1;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    width: 80%;
+    padding: 20px;
+    text-align: center;
+  }
+
+
+.keyboard {
+	border: .1em solid #aaa;
+	border-radius: 15%;
+	display: inline-block;
+	padding: .1em .5em;
+	background: linear-gradient(#ddd, #fff 20% 80%, #ddd) 0 100%/ 1% 125%;
+	user-select: none;
+	color: #000;
+	font-weight: bold;
+	transition: background-position .3s
+	}
+
 </style>
 
 <!-- <script type="text/javascript"  src="https://threejs.org/build/three.js"></script> -->
 
 
-<script type="module" src="final.js"></script>
+<script type="module" src="../src/final.js"></script>
 
-<script>javascript:(function(){var script=document.createElement('script');script.onload=function(){var stats=new Stats();document.body.appendChild(stats.dom);requestAnimationFrame(function loop(){stats.update();requestAnimationFrame(loop)});};script.src='//mrdoob.github.io/stats.js/build/stats.min.js';document.head.appendChild(script);})()
 </script>
 
 </head>
 
-<body>
-    <canvas id="textureCanvas" hidden>123</canvas>
-     <div ><progress id="power" value="0" max="10"    ></progress></div>
-<div id="gl-canvas"  >
-  
+<body id="body">
+
+
+
+
+	<canvas id="textureCanvas" hidden>123</canvas>
+	
+	<div id="description" class="bg-text"  hidden>
+
+<p> Effect <br/><span class="keyboard">&#8592;</span><span class="keyboard">&#8594;</span><span class="keyboard">&#8593;</span><span class="keyboard">&#8595;</span> </p>
+<p> Direction <br/> <span class="keyboard">W</span> <span class="keyboard">A</span> <span class="keyboard">S</span> <span class="keyboard">D</span> </p>
+<p>Shot <br/> <span class="keyboard">&#8617;</span>  </p>
+<p>Quick shot <br/> 
+<span class="keyboard">K</span> right low <span class="keyboard">I</span> right high<span class="keyboard">U</span> center high<span class="keyboard">Y</span> left high <span class="keyboard">H</span> left low <span class="keyboard">J</span> center low
+</p>
+</div>	
+
+<div style="position: fixed; top: 90% ; left: 90%;">  <a class="btn-floating btn-medium waves-effect waves-light red" onclick="myFunction()">
+	<i class=" medium material-icons">info_outline</i>
+</a>
+</div>
+<div id="gl-canvas"  width="100%" height="100%"  style="position: fixed; top: 0px ; left: 0px;">
+
+
+    <div class="preloader-wrapper big active"  style="position: fixed; top: 50%; left: 50%; cursor: pointer ; height: 150px; width: 150px;" >
+		<div class="spinner-layer spinner-blue">
+		  <div class="circle-clipper left">
+			<div class="circle"></div>
+		  </div><div class="gap-patch">
+			<div class="circle"></div>
+		  </div><div class="circle-clipper right">
+			<div class="circle"></div>
+		  </div>
+		</div>
+
+
 </div>
 
 
+
+<script>
+	function myFunction() {
+	  var x = document.getElementById("description");
+	  if (x.style.display === "none") {
+		x.style.display = "block";
+	  } else {
+		x.style.display = "none";
+	  }
+	}
+	</script>
 
 
 <!-- <img id="texImage2" src="../Homework2/texture/face.jpg" hidden>

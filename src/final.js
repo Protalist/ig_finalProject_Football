@@ -1,4 +1,3 @@
-
 //import
 import * as THREE from '../src/node_modules/three/build/three.module.js'//'https://unpkg.com/three@0.118.3/build/three.module.js';
 import { OrbitControls } from '../src/node_modules/three/examples/jsm/controls/OrbitControls.js' // 'https://unpkg.com/three@0.118.3/examples/jsm/controls/OrbitControls.js';
@@ -7,13 +6,16 @@ import { TDSLoader } from '../src/node_modules/three/examples/jsm/loaders/TDSLoa
 import {OBJLoader} from '../src/node_modules/three/examples/jsm/loaders/OBJLoader.js';
 import { FBXLoader } from '../src/node_modules/three/examples/jsm/loaders/FBXLoader.js';
 
+import Stats from "../src/node_modules/stats.js/src/Stats.js"
 
 
 import TWEEN from '../src/node_modules/@tweenjs/tween.js/dist/tween.esm.js'
 
-import {streetLamp,audience, multipleAudience,portiere, ball, humanStructure} from '../src/Shape/shape.js'
-import {changeCanvas} from "../src/Util/Util.js"
+import {streetLamp, multipleAudience,portiere, ball, humanStructure,curveLine,light} from '../src/Shape/shape.js'
+import {changeCanvas,checkINdex,visualPower} from "../src/Util/Util.js"
 
+
+var stats;
 
 var clock = new THREE.Clock();
 //Ball and goal var
@@ -29,8 +31,15 @@ var pressed_key;
 var tween1,tween2;
 var notStartedSecondTween=false;
 var notStarted = false;
+var curve
+var boxBall = new THREE.Box3();
+var boxGoal = new THREE.Box3();
+var boxPort= new THREE.Box3();
+
+var port
 
 
+var percentagModel=[false,false,false]
 //Airplane
 var aereoStartPosition ={x:110,y:70,z:-200}
 
@@ -54,6 +63,7 @@ var tween,tween3;
 
 var tweenIdleHuman2,tweenIdleHuman1
 
+var tabellone;
 //main object in the scene
 var renderer;
 var scene,Bscene;
@@ -116,30 +126,30 @@ function calculateCollisionPoints( mesh,type,idArray) {
   }
 
 
-function light(a,b,c){
-    const color = 0xFFFFFF;
-    const intensity = 1.1;
-    const light = new THREE.DirectionalLight(color, intensity);
-    light.castShadow = true; 
+// function light(a,b,c){
+//     const color = 0xFFFFFF;
+//     const intensity = 1.1;
+//     const light = new THREE.DirectionalLight(color, intensity);
+//     light.castShadow = true; 
 
 
-//light.shadowCameraVisible = true;
-    light.position.set(a,b,c);
-    light.shadow.camera.top=30;
-    light.shadow.camera.bottom=-30;
-    light.shadow.mapSize.width = 300;  // default
-    light.shadow.mapSize.height = 300; // default
-    light.shadow.camera.near = -50.5;    // default
-    light.shadow.camera.far = 50;     // default
-    light.shadow.camera.left = 50;  
-    light.shadow.camera.right = -50;  
-    scene.add(light);
-    light_a.push(light)
-//     var helper = new THREE.CameraHelper( light.shadow.camera );
-//    scene.add( helper );
+// //light.shadowCameraVisible = true;
+//     light.position.set(a,b,c);
+//     light.shadow.camera.top=30;
+//     light.shadow.camera.bottom=-30;
+//     light.shadow.mapSize.width = 300;  // default
+//     light.shadow.mapSize.height = 300; // default
+//     light.shadow.camera.near = -50.5;    // default
+//     light.shadow.camera.far = 50;     // default
+//     light.shadow.camera.left = 50;  
+//     light.shadow.camera.right = -50;  
+//     scene.add(light);
+//     light_a.push(light)
+// //     var helper = new THREE.CameraHelper( light.shadow.camera );
+// //    scene.add( helper );
 
     
-  }
+//   }
 
 function background(){
     Bscene=new THREE.Scene()
@@ -156,24 +166,27 @@ function background(){
 
 
 
-function fondoCampo(){
+// function fondoCampo(){
     
-    const planeGeo = new THREE.PlaneBufferGeometry(50,120);
-    const planeMat = new THREE.MeshPhongMaterial({
-        color: 0x44aa88,
-    side: THREE.DoubleSide,
-    fog: false,
-    });
-    const mesh = new THREE.Mesh(planeGeo, planeMat);
-    mesh.receiveShadow = true;
-    mesh.position.set(85,0,0);
-    mesh.rotation.x = Math.PI/2;
-    scene.add(mesh);
-}
+//     const planeGeo = new THREE.PlaneBufferGeometry(50,120);
+//     const planeMat = new THREE.MeshPhongMaterial({
+//         color: 0x44aa88,
+//     side: THREE.DoubleSide,
+//     fog: false,
+//     });
+//     const mesh = new THREE.Mesh(planeGeo, planeMat);
+//     mesh.receiveShadow = true;
+//     mesh.position.set(85,0,0);
+//     mesh.rotation.x = Math.PI/2;
+//     scene.add(mesh);
+// }
 
 function specchio(){
     
-    const planeGeo = new THREE.PlaneBufferGeometry(55,16);
+    const planeGeo =     new THREE.BoxBufferGeometry(
+        55, 16, 2,
+        32, 32, 32);
+
     const planeMat = new THREE.MeshPhongMaterial({
         color: 0xFF0000,
     side: THREE.DoubleSide,
@@ -182,10 +195,11 @@ function specchio(){
     const mesh = new THREE.Mesh(planeGeo, planeMat);
     
     mesh.receiveShadow = true;
-    mesh.position.set(52.5,9,0);
+    mesh.position.set(52.7,9,0);
     mesh.rotation.y = Math.PI/2;
     return mesh;
 }
+
 
 function fuorisx(){
     
@@ -238,27 +252,27 @@ function fuoriup(){
 
 
 
-function plane(a,b){
-    const texture = loader.load('../src/texture/football_field.jpeg');
-    texture.wrapS = THREE.RepeatWrapping;
-    texture.wrapT = THREE.RepeatWrapping;
-    texture.magFilter = THREE.NearestFilter;
-    const repeats = a/32;
+// function plane(a,b){
+//     const texture = loader.load('../src/texture/football_field.jpeg');
+//     texture.wrapS = THREE.RepeatWrapping;
+//     texture.wrapT = THREE.RepeatWrapping;
+//     texture.magFilter = THREE.NearestFilter;
+//     const repeats = a/32;
 
-    texture.repeat.set(1, 1);
+//     texture.repeat.set(1, 1);
 
-    const planeGeo = new THREE.PlaneBufferGeometry(a,b);
-    const planeMat = new THREE.MeshPhongMaterial({
-        map: texture,
-    side: THREE.DoubleSide,
-    fog: false,
-    });
-    const mesh = new THREE.Mesh(planeGeo, planeMat);
-    mesh.rotation.x = Math.PI * -.5;
-    mesh.receiveShadow = true;
-    scene.add(mesh);
-    texture_a.push(texture)
-    }
+//     const planeGeo = new THREE.PlaneBufferGeometry(a,b);
+//     const planeMat = new THREE.MeshPhongMaterial({
+//         map: texture,
+//     side: THREE.DoubleSide,
+//     fog: false,
+//     });
+//     const mesh = new THREE.Mesh(planeGeo, planeMat);
+//     mesh.rotation.x = Math.PI * -.5;
+//     mesh.receiveShadow = true;
+//     scene.add(mesh);
+//     texture_a.push(texture)
+//     }
 
 
 var matSel=0;
@@ -312,10 +326,8 @@ function loadPlane(){
                     }
                 }
             );
+            percentagModel[0]=true
             scene.add(object);
-            
-            
-            
          
         },
         // called when loading is in progresses
@@ -440,7 +452,9 @@ function loadModel(){
         object.rotateZ(-180*Math.PI/180)
         object.scale.set(0.1,0.2,0.09)
 
+        
         scene.add( object );
+        percentagModel[1]=true
 
     } );
     
@@ -512,7 +526,7 @@ function loadModel2(){
         object.scale.set(0.5,0.5,0.5)
 
         scene.add( object );
-        
+        percentagModel[2]=true
 
 
     } );
@@ -584,13 +598,20 @@ window.onload= function(){
     //var helper = new THREE.CameraHelper( camera );
    // scene.add( helper );
     
-    light(-2, 4, -8);
+   var l=light(-2, 4, -8);
+   scene.add(l);
+   light_a.push(light)
 
-    plane(planeA,planeB);
-    fondoCampo();
+    // plane(planeA,planeB);
+    // fondoCampo();
     
     goal = specchio();
+    boxGoal.setFromObject(goal)
+    // // var planeGoal=planeSpecchio();
+    // planeGoal.applyMatrix4( goal.matrixWorld );
     
+    var helperG = new THREE.Box3Helper( boxGoal, 0xD0EF0C );
+    scene.add( helperG );
   
     scene.add(camera);
     fuoriDx=fuoridx();
@@ -619,14 +640,34 @@ window.onload= function(){
     balla = ball(1,32);
     balla.position.y=1;
 
+    balla.geometry.computeBoundingBox();
+
+
+    boxBall.copy( balla.geometry.boundingBox ).applyMatrix4( balla.matrixWorld );
+
+    var helper = new THREE.Box3Helper( boxBall, 0xffff00 );
+    scene.add( helper );
+
+
     scene.add(balla);
-    console.log(balla.position.z)
-    var port=portiere();
+
+    port=portiere();
     port.translateX(planeA/2-10)
     port.translateZ(-20)
     port.rotateY(90*Math.PI/180)
 
+
+    boxPort.setFromObject( port ).applyMatrix4( port.matrixWorld );
+
+    var helperP = new THREE.Box3Helper( boxPort, 0xffff00 );
+    scene.add( helperP );
+
     scene.add(port)
+
+
+    scene.add(port)
+
+
     calculateCollisionPoints(balla,"collision",0);
     calculateCollisionPoints(goal,"collision",1);
     calculateCollisionPoints(port,"collision",2);
@@ -642,7 +683,10 @@ window.onload= function(){
     }
 
 
-    
+      {
+        curve=curveLine(a,b,c);
+        scene.add(curve);
+    }
     
      tween= new TWEEN.Tween(port.position).to({z:"+40"},3000).repeat(Infinity).yoyo(true).onUpdate(()=>{
         calculateCollisionPoints(port,"collision",2);
@@ -685,37 +729,16 @@ for(var i=0;i<3;i++){
     ad.rotateY(180*Math.PI/180)
   scene.add(ad);}
 
-    renderer = new THREE.WebGLRenderer();
-    renderer.autoClearColor = false;
-    renderer.shadowMap.enabled = true ;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
-    renderer.setPixelRatio( window.devicePixelRatio );
-
-    // add the automatically created <canvas> element to the page
-    document.body.appendChild( renderer.domElement );
-
-    // render, or 'create a still image', of the scene
-
-    renderer.render( scene, camera );
-    
-    controls = new OrbitControls(camera,renderer.domElement);
-
-    controls.keys = {
-        LEFT: 65, //a
-        UP: 87, // w
-        RIGHT: 68, // d 
-        BOTTOM: 83 // s 
+  { stats = new Stats();
+    stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+    document.body.appendChild( stats.dom );
     }
-
-    controls.target=human.position
-    
-    controls.update();
-    console.log(airparts);
-    animate(0.00);
- 
+    renderer = new THREE.WebGLRenderer();
+  
+    background();
+  
+    animateWaiting(0.0)
+   
 }
 
 
@@ -916,9 +939,63 @@ function ShotBall(balla,dir){
 }
 
 
+function resizeRendererToDisplaySize(renderer) {
+    const canvas = renderer.domElement;
+    const width = canvas.clientWidth;
+    const height = canvas.clientHeight;
+    const needResize = canvas.width !== width || canvas.height !== height;
+    if (needResize) {
+      renderer.setSize(width, height, false);
+    }
+    return needResize;
+  }
+
+
+  function animateWaiting(time){
+    if(checkINdex(percentagModel)){
+
+        setTimeout(function() { document.getElementById("gl-canvas").remove(); visualPower(); }, 4000);
+        renderer.autoClearColor = false;
+        renderer.shadowMap.enabled = true ;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+        renderer.setSize( window.innerWidth, window.innerHeight );
+    
+        renderer.setPixelRatio( window.devicePixelRatio );
+    
+        // add the automatically created <canvas> element to the page
+        document.body.appendChild( renderer.domElement );
+    
+        // render, or 'create a still image', of the scene
+    
+        renderer.render( scene, camera );
+        controls = new OrbitControls(camera,renderer.domElement);
+    
+        controls.keys = {
+            LEFT: 65, //a
+            UP: 87, // w
+            RIGHT: 68, // d 
+            BOTTOM: 83 // s 
+        }
+        controls.enableKeys = false
+    
+        controls.target=human.position
+        
+        controls.update();
+
+        animate(0.00);
+    }else{
+        requestAnimationFrame(animateWaiting)
+    }
+}
+
+
 function animate(time){
+    stats.begin();
+
     changeCanvas(ctx,canvas2,point)
     if (resizeRendererToDisplaySize(renderer)) {
+        // document.getElementById("textureCanvas");
         const canvas = renderer.domElement;
         camera.aspect = canvas.clientWidth / canvas.clientHeight;
         camera.updateProjectionMatrix();
@@ -927,9 +1004,9 @@ function animate(time){
 
       
     var delta = clock.getDelta(); 
-    requestAnimationFrame( animate );
  
-    
+    boxBall.copy( balla.geometry.boundingBox ).applyMatrix4( balla.matrixWorld );
+    boxPort.copy( port.geometry.boundingBox ).applyMatrix4( port.matrixWorld );
     texturePoint.needsUpdate = true;
     TWEEN.update(time);
     HumanGroup.update(time)
@@ -939,16 +1016,23 @@ function animate(time){
    for (var g in gif){
        gif[g].update(1000*delta);
    }
-	renderer.render( scene, camera );
+    renderer.render( scene, camera );
+
+    stats.end();
+    requestAnimationFrame( animate );
 }
 
-var kciking=false;
-
-var d = new Date();
-
 var timeZ=0;
-var timeY=0;
-var timeX=0;
+var timeY=2;
+var timeX=56;
+
+var endZ=0;
+var endY=1;
+
+var a=new THREE.Vector3( 0, 1, 0 );
+var b=new THREE.Vector3( 30, 2, 0 );
+var c=new THREE.Vector3( 56, 2, 0 );
+
 
 document.onkeydown=function(e){
 
@@ -988,7 +1072,7 @@ document.onkeydown=function(e){
      }
 
      if(dir != ""){
-        kciking=true
+ 
         powerShot(pressed_key);
         dir=""
      }
@@ -996,27 +1080,75 @@ document.onkeydown=function(e){
 
      if(event.code== "ArrowLeft"){
         timeZ-=1;
+        b.z-=1
+
      }
      if(event.code== "ArrowRight"){
         timeZ+=1;
+        b.z+=1
+
      }
 
      if(event.code== "ArrowUp"){
         timeY+=1;
+        b.y+=1
      }
 
      if(event.code== "ArrowDown"){
-         if(timeY>=0){
+         if(timeY>=1){
             timeY-=1;
+         }
+
+         if(b.y>=1){
+            b.y-=1
          }
 
      }
 
+     if(event.code=="KeyD"){
+        endZ+=1;
+        timeZ+=0.5;
+        c.z+=1
+        b.z+=0.5
+     }
+
+     if(event.code=="KeyA"){
+        endZ-=1;
+        timeZ-=0.5;
+        c.z-=1
+        b.z-=0.5
+     }
+
+     if(event.code=="KeyW"){
+        endY+=1;
+        c.y+=1
+        b.y+=0.5
+     }
+
+     if(event.code=="KeyS"){
+        endY-=1;
+        c.y-=1
+        b.y-=0.5
+     }
 
      if(event.code== "Enter"){
-        timeX+=1;
+        powerShot(pressed_key);
+   
+        if(c.x<timeX+10){
+            b.x+=0.35;
+            c.x+=0.70;
+        }
+
+
      }
-console.log(timeX)
+
+     var curveg = new THREE.QuadraticBezierCurve3(
+        a,b,c
+           );
+           
+           var points = curveg.getPoints( 50 );
+           var geometry = new THREE.BufferGeometry().setFromPoints( points );
+    curve.geometry=geometry
 }
 
 
@@ -1036,14 +1168,15 @@ function powerShot(pressedKey){
 
 document.onkeyup=function(e){
 
-    var dir="c"
-        if(e.code== "Enter"){
+   
+    var dir=""
+        if(e.code== "Enter" && !notStarted){
             console.log("spara")
-            if(!kciking){
-                kciking=true
-                runAndKick(dir);
-                dir=""
-             }
+
+            notStarted=true
+                runAndKick("");
+
+
          }
 
     
@@ -1109,7 +1242,6 @@ function runAndKick(dir=""){
     var runback_2= new TWEEN.Tween(human.children[5].children[0].children[0].rotation,HumanGroup).to({x: 90*Math.PI/180},time/2).repeat(1).yoyo(true)
     var runback1=new TWEEN.Tween(human.children[5].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(1).yoyo(true).onStart(()=>{runback_2.start()}).onRepeat(()=>{runback_2.start()})
     var runback=new TWEEN.Tween(human.children[4].rotation,HumanGroup).to({x: -90*Math.PI/180},time/2).repeat(3).yoyo(true).onRepeat((obj)=>{runback1.start()}).onStart(()=>{runback1_2.start(); tweenBodyN.start()}).onComplete(()=>{
-        kciking=false;
         tweenIdleHuman1.start();
     })
 
@@ -1128,14 +1260,178 @@ function runAndKick(dir=""){
     tweenArm1.start()
     tweenArm2.start()
     tweenLowerLeg2.start()
-    setTimeout(()=>{
-        if(dir!=""){
-            var t=ShotBall(balla,dir);
-            tweenLowerLeg2.chain(t)
-        }
-    },740);
-    
+    if(dir!=""){
+        var t=ShotBall(balla,dir);
+        tweenLowerLeg2.chain(t)
+    }
+else{
+    var t=spara(balla)
+    tweenLowerLeg2.chain(t)
 }
+}
+
+
+function tweenAereo(){
+    aereoGoal = scene.getObjectByName("Aereo");
+    var startP = aereoGoal.position; var tarP = {z:600};
+    aereoGoal.traverse(
+       function (c){
+           if (c instanceof THREE.Mesh) {
+               c.material.transparent =true;
+               c.material.opacity = 1.0;
+               
+           }
+       }
+   );
+
+   var tweenplane = new TWEEN.Tween(startP).to({z:400},7000).onUpdate((obj)=>{
+    controls.target=obj;
+    aereoGoal.position.z = startP.z; 
+    eli.rotation.z+=20.
+    if(aereoGoal.position.z>=200){
+       aereoGoal.traverse(
+           function (c){
+               if (c instanceof THREE.Mesh) {
+                   c.material.transparent =true;
+                   c.material.opacity -= 0.05;
+                   
+               }
+           }
+       );
+    }
+}).onComplete(()=>{
+    controls.target=human.position;
+    aereoGoal.position.set(aereoStartPosition.x,aereoStartPosition.y,aereoStartPosition.z);
+
+}).start();
+return tweenplane
+}
+
+
+
+var goalX,goalY,goalZ,goalRotation;
+function spara(balla){
+    var goal=0
+    goalX = new TWEEN.Tween(balla.position).to({x:[0,b.x,c.x]},1000).onStart(
+        () =>{
+            goalY= new TWEEN.Tween(balla.position).to({y:[1,b.y,c.y]},1000).interpolation(TWEEN.Interpolation.Bezier).start()
+            goalZ= new TWEEN.Tween(balla.position).to({z:[0,b.z,c.z]},1000).interpolation(TWEEN.Interpolation.Bezier).start()
+            goalRotation= new TWEEN.Tween(balla.rotation).to({x: "+"+timeX/2,y:"+"+timeY/2},1000).repeat(10).start()
+        }
+    ).interpolation(TWEEN.Interpolation.Bezier)
+    .onComplete(
+        (obj) => {
+
+
+            // goalX.stop()
+            // goalZ.stop()
+            // goalY.stop()
+            // goalRotation.stop()
+
+            // console.log("not enogh")
+            // point=0;
+
+            // new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
+            //     obj.camera.target=tabellone.position;
+            //     //camera.position.set(tabellone.position.x,30,-20);
+            
+            //     point="NOOOOOOOOOO!!!!!!!"
+            // }).onComplete((obj)=>{
+            //     obj.camera.target=human.position;
+            //     point=0
+            // }).start()
+            // newShot()
+        }
+    ).onUpdate(
+        (obj)=>{
+            if(boxBall.intersectsBox(boxPort)){
+                console.log("No Goal")
+                goal=2
+                goalX.stop()
+                goalZ.stop()
+                goalY.stop()
+                goalRotation.stop()
+            }
+            
+
+            if(boxBall.intersectsBox(boxGoal)){
+                console.log("Goal")
+                goal=1
+                goalX.stop()
+                goalZ.stop()
+                goalY.stop()
+                goalRotation.stop()
+            }
+
+
+
+            if(obj.x>55 && goal==0 ){
+                goalX.stop()
+                goalZ.stop()
+                goalY.stop()
+                goalRotation.stop()
+
+                console.log("out")
+                point=0;
+
+                new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
+        
+                    //camera.position.set(tabellone.position.x,30,-20);
+                
+                    point="OUUUUTTT!!!!!"
+                }).onComplete((obj)=>{
+                    point=0
+                }).start()
+                new TWEEN.Tween(balla.position).to({x:"-10"},1000).start()
+                new TWEEN.Tween(balla.position).to({y:"-"+(balla.position.y-1)},2000).onComplete(()=>{
+                    newShot()
+                }).easing(TWEEN.Easing.Bounce.Out).start()
+            }
+
+            
+            }
+
+    ).onStop(
+        (obj)=>{
+            if (goal==1){
+ 
+    
+
+                point++;
+
+                tweenAereo().start();
+                new TWEEN.Tween(balla.position).to({x:"+7"},1000).start()
+                new TWEEN.Tween(balla.position).to({y:"-"+(balla.position.y-1)},2000).onComplete(()=>{
+                    newShot()
+                }).easing(TWEEN.Easing.Bounce.Out).start()
+
+            }
+
+            if (goal == 2){
+
+
+                point=0;
+
+                new TWEEN.Tween({x:10, camera: controls}).to({x:100},3000).onStart((obj)=>{
+        
+                    //camera.position.set(tabellone.position.x,30,-20);
+                
+                    point="PARATA!!!!!!!"
+                }).onComplete((obj)=>{
+                    point=0
+                }).start()
+                new TWEEN.Tween(balla.position).to({x:"-10"},1000).start()
+                new TWEEN.Tween(balla.position).to({y:"-"+(balla.position.y-1)},2000).onComplete(()=>{
+                    newShot()
+                }).easing(TWEEN.Easing.Bounce.Out).start()
+            }
+
+
+        }
+    )
+    return goalX;
+}
+
 
 
 
@@ -1143,21 +1439,22 @@ function newShot(){
     notStartedSecondTween=false;
     GOAL=false;
     notStarted=false;
-    MISS=false;
     balla.position.set(0,1,0);
     document.getElementById("power").value=0.0;
     pot={power:1000+500};
+
+    b.x=25;
+    b.y=1;
+    b.z=0;
+    c.x=60;
+    c.y=1;
+    c.z=0;
+    var curveg = new THREE.QuadraticBezierCurve3(
+        a,b,c
+           );
+           
+           var points = curveg.getPoints( 50 );
+           var geometry = new THREE.BufferGeometry().setFromPoints( points );
+curve.geometry=geometry
     
 }
-
-
-function resizeRendererToDisplaySize(renderer) {
-    const canvas = renderer.domElement;
-    const width = canvas.clientWidth;
-    const height = canvas.clientHeight;
-    const needResize = canvas.width !== width || canvas.height !== height;
-    if (needResize) {
-      renderer.setSize(width, height, false);
-    }
-    return needResize;
-  }

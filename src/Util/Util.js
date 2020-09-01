@@ -57,3 +57,32 @@ export function TextureAnimator(texture, tilesHoriz, tilesVert, numTiles, tileDi
 export function getRndInteger(min, max) {
 	return Math.floor(Math.random() * (max - min) ) + min;
   }
+
+
+
+export function checkINdex( list){
+	var ret =true;
+	for(var i in list){
+
+		ret = ret && list[i];
+	}
+	console.log(list)
+	return ret;
+}
+
+
+
+export function visualPower(){
+	var para = document.createElement("div");
+	var node = document.createElement("progress");
+	node.setAttribute("id", "power")
+	node.setAttribute("value","0")
+	node.setAttribute( "max","10")
+	para.appendChild(node);
+
+	var element = document.getElementById("body");
+	element.appendChild(para);
+}
+
+
+

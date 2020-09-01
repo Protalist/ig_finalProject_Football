@@ -249,6 +249,8 @@ shape.lineTo(x,y)
 
 
 
+var port = new THREE.Group();
+port.name="PORTIERE"
 var shape2= new THREE.Shape();
 
 shape2.moveTo(0,heigh+radius+radius2/2)
@@ -256,12 +258,44 @@ shape2.arc(0,0,radius2,0,360*Math.PI/180,false);
 
 
 const curveSegments =  6;  
-var g=new THREE.ShapeBufferGeometry(shape, curveSegments);
+var extrudeSettings = {
+    steps: 2,  
+  
+    depth:  1.5,  
+  
+    bevelEnabled: false,  
+    bevelThickness: 0.65,  
+  
+    bevelSize: 0.80,  
+  
+    bevelSegments: 2,  
+  
+  };
+  var extrudeSettings2 = {
+    steps: 2,  
+  
+    depth:  1,  
+  
+    bevelEnabled: false,  
+    bevelThickness: 0.65,  
+  
+    bevelSize: 0.80,  
+  
+    bevelSegments: 2,  
+  
+  };
+var g=new THREE.ExtrudeBufferGeometry(shape, extrudeSettings);
 var m = new THREE.MeshPhongMaterial({ color: 0x8B8381 ,side: THREE.DoubleSide} );
 
-var g2=new THREE.ShapeBufferGeometry(shape2, curveSegments);
+var g2=new THREE.ExtrudeBufferGeometry(shape2, extrudeSettings2);
+
+
+  
 var r= new THREE.Mesh(g,m);
+
+r.name="Portiere"
 r.add(new THREE.Mesh(g2,m))
+port.add(r)
 return r;
 }
 
@@ -311,6 +345,7 @@ const material = new THREE.MeshPhongMaterial();
 const mesh = new THREE.Mesh(geometry, material);
 material.map = new THREE.TextureLoader().load('../src/texture/ballTex.jpg');
 mesh.castShadow=true
+mesh.name="palla"
 return mesh;
 
 }
@@ -358,10 +393,10 @@ export function multipleAudience(N,M,xMin,xMax,yMin,yMax,zMin,zMax,t){
 
 
     var colors=[
-        new THREE.SpriteMaterial(  {map: ttxt1,color: 0xffffff*Math.random() }),
-        new THREE.SpriteMaterial( {map: ttxt1,color: 0xffffff*Math.random() }),
-        new THREE.SpriteMaterial( {map: ttxt1,color: 0xffffff*Math.random() }),
-        new THREE.SpriteMaterial( {map: ttxt1, color: 0xffffff*Math.random() })
+        new THREE.SpriteMaterial(  {map: ttxt1,color: 0xD0EF0C }),
+        new THREE.SpriteMaterial( {map: ttxt1,color: 0x0CEF7A }),
+        new THREE.SpriteMaterial( {map: ttxt1,color: 0xE50CEF }),
+        new THREE.SpriteMaterial( {map: ttxt1, color: 0x0CD3EF })
     ]
     
 
@@ -385,3 +420,80 @@ export function multipleAudience(N,M,xMin,xMax,yMin,yMax,zMin,zMax,t){
     }
     return groupPeople;
 }
+
+
+
+export function curveLine(a,b,c){
+    var curve = new THREE.QuadraticBezierCurve3(
+ a,b,c
+    );
+    
+    var points = curve.getPoints( 50 );
+    var geometry = new THREE.BufferGeometry().setFromPoints( points );
+    
+    var material = new THREE.LineBasicMaterial( { color : 0xff0000 } );
+    
+    // Create the final object to add to the scene
+    var curveObject = new THREE.Line( geometry, material );
+
+    return curveObject;
+}
+
+export function light(a,b,c){
+    var color = 0xFFFFFF;
+    var intensity = 1.1;
+    var light = new THREE.DirectionalLight(color, intensity);
+    light.castShadow = true; 
+
+
+    //light.shadowCameraVisible = true;
+    light.position.set(a,b,c);
+    light.shadow.camera.top=30;
+    light.shadow.camera.bottom=-30;
+    light.shadow.mapSize.width = 300;  // default
+    light.shadow.mapSize.height = 300; // default
+    light.shadow.camera.near = -50.5;    // default
+    light.shadow.camera.far = 50;     // default
+    light.shadow.camera.left = 50;  
+    light.shadow.camera.right = -50;  
+    return light;
+  }
+
+
+  function fondoCampo(){
+    
+    const planeGeo = new THREE.PlaneBufferGeometry(50,120);
+    const planeMat = new THREE.MeshPhongMaterial({
+        color: 0x44aa88,
+    side: THREE.DoubleSide,
+    fog: false,
+    });
+    const mesh = new THREE.Mesh(planeGeo, planeMat);
+    mesh.receiveShadow = true;
+    mesh.position.set(85,0,0);
+    mesh.rotation.x = Math.PI/2;
+    scene.add(mesh);
+}
+
+
+function plane(a,b){
+    const texture = loader.load('../src/texture/football_field.jpeg');
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.magFilter = THREE.NearestFilter;
+    const repeats = a/32;
+
+    texture.repeat.set(1, 1);
+
+    const planeGeo = new THREE.PlaneBufferGeometry(a,b);
+    const planeMat = new THREE.MeshPhongMaterial({
+        map: texture,
+    side: THREE.DoubleSide,
+    fog: false,
+    });
+    const mesh = new THREE.Mesh(planeGeo, planeMat);
+    mesh.rotation.x = Math.PI * -.5;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+    texture_a.push(texture)
+    }
